@@ -1,0 +1,22 @@
+#include "Window.h"
+
+namespace Eng {
+    Window::Window(const std::string& _name, const ivec2& _size) : name(_name), size(_size){
+        glfwInit();
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        window = glfwCreateWindow(size.x, size.y, name.c_str(), nullptr, nullptr);// last argument is for fullscreen.
+    }
+    Window::~Window() {
+        glfwDestroyWindow(window);
+    }
+    bool Window::shouldClose() {
+        return glfwWindowShouldClose(window);
+    }
+    bool Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) {
+        if (glfwCreateWindowSurface(instance, window, nullptr, surface) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create window surface");
+        }
+        return true;
+    }
+}
