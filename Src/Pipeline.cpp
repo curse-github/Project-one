@@ -13,35 +13,40 @@ namespace Eng {
         createShaderModule(fragCode, &fragShaderModule);
         VkPipelineShaderStageCreateInfo shaderStages[2];
         shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStages[1].pNext = nullptr;
+        shaderStages[1].flags = 0;
         shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
         shaderStages[0].module = vertShaderModule;
         shaderStages[0].pName = "main";
-        shaderStages[0].flags = 0;
-        shaderStages[0].pNext = nullptr;
         shaderStages[0].pSpecializationInfo = nullptr;
         shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStages[1].pNext = nullptr;
+        shaderStages[1].flags = 0;
         shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
         shaderStages[1].module = fragShaderModule;
         shaderStages[1].pName = "main";
-        shaderStages[1].flags = 0;
-        shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
 
-        VkPipelineVertexInputStateCreateInfo vertexInputInfo;
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexAttributeDescriptionCount = 0;
         vertexInputInfo.pVertexAttributeDescriptions = nullptr;
         vertexInputInfo.vertexBindingDescriptionCount = 0;
         vertexInputInfo.pVertexBindingDescriptions = nullptr;
+        
+        VkPipelineViewportStateCreateInfo viewportInfo{};
+        viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportInfo.viewportCount = 1;
+        viewportInfo.scissorCount = 1;
+        viewportInfo.pViewports = &config.viewport;
+        viewportInfo.pScissors = &config.scissor;
 
-        VkGraphicsPipelineCreateInfo pipelineInfo;
+        VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.pNext = nullptr;
-        pipelineInfo.flags = 0;
         pipelineInfo.stageCount = 2;
         pipelineInfo.pStages = shaderStages;
         pipelineInfo.pVertexInputState = &vertexInputInfo;
-        pipelineInfo.pViewportState = &config.viewportInfo;
+        pipelineInfo.pViewportState = &viewportInfo;
         pipelineInfo.pInputAssemblyState = &config.inputAssemblyInfo;
         pipelineInfo.pRasterizationState = &config.rasterizationInfo;
         pipelineInfo.pMultisampleState = &config.multisampleInfo;
@@ -70,10 +75,8 @@ namespace Eng {
 
     
     void Pipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule) {
-        VkShaderModuleCreateInfo createInfo;
+        VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        createInfo.pNext = nullptr;
-        createInfo.flags = 0;
         createInfo.codeSize = code.size();
         createInfo.pCode = reinterpret_cast<const unsigned int*>(code.data());
         if (vkCreateShaderModule(device->device, &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
@@ -81,7 +84,7 @@ namespace Eng {
         }
     }
     PipelineConfigInfo Pipeline::createDefaultConfig(const ivec2& windowSize) {
-        PipelineConfigInfo configInfo;
+        PipelineConfigInfo configInfo{};
         // viewport, IMPORTANT, very useful for moving the viewport around and squishing it
         configInfo.viewport.x = 0.0f;
         configInfo.viewport.y = 0.0f;
@@ -96,12 +99,6 @@ namespace Eng {
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;// IMPORTANT, might be changed soon
         configInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
-        // viewportInfo
-        configInfo.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-        configInfo.viewportInfo.viewportCount = 1;
-        configInfo.viewportInfo.scissorCount = 1;
-        configInfo.viewportInfo.pViewports = &configInfo.viewport;
-        configInfo.viewportInfo.pScissors = &configInfo.scissor;
         // rasterizationInfo
         configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         configInfo.rasterizationInfo.depthBiasClamp = VK_FALSE;

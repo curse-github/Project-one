@@ -13,6 +13,7 @@ namespace Eng {
         VkPhysicalDeviceProperties properties;
         const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
         const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+        const std::vector<const char *> instanceExtensions = {"VK_NV_external_memory_capabilities"};
     public:
         VkInstance instance;
         VkDebugUtilsMessengerEXT debugMessenger;
@@ -28,9 +29,15 @@ namespace Eng {
         Device(Device&& move) = delete;
         Device& operator=(Device&& move) = delete;
         ~Device();
+        
+        Eng::SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); };
+        QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); };
+        void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+        void copyBufferToImage(VkBuffer buffer, VkImage image, unsigned int width, unsigned int height, unsigned int layerCount);
+        void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+        VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);// used in swapchain
     private:
-        // not sure where this is used yet
-        VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
         void createInstance();
         void setupDebugMessenger();
@@ -41,7 +48,7 @@ namespace Eng {
 
         bool checkValidationLayerSupport();
         std::vector<const char *> getRequiredExtensions();
-        void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+        void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
         void hasGflwRequiredInstanceExtensions();
         bool isDeviceSuitable(VkPhysicalDevice device);
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
@@ -49,23 +56,8 @@ namespace Eng {
         bool checkDeviceExtensionSupport(VkPhysicalDevice device);
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
-        void createBuffer(
-            VkDeviceSize size,
-            VkBufferUsageFlags usage,
-            VkMemoryPropertyFlags properties,
-            VkBuffer &buffer,
-            VkDeviceMemory &bufferMemory);
-        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-        void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
-        void createImageWithInfo(
-            const VkImageCreateInfo &imageInfo,
-            VkMemoryPropertyFlags properties,
-            VkImage &image, VkDeviceMemory
-            &imageMemory);
-            
-        // querySwapChainSupport(physicalDevice);
-        // findQueueFamilies(physicalDevice);
-        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+        // only used by buffer functions
+        unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties);
         VkCommandBuffer beginSingleTimeCommands();
         void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     };
