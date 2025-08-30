@@ -6,6 +6,7 @@
 #include "Helpers.h"
 #include "Device.h"
 
+// input assembler -> vertex shader -> rasterization -> fragment shader -> color blending
 namespace Eng {
     struct PipelineConfigInfo {
         VkViewport viewport;
@@ -14,11 +15,10 @@ namespace Eng {
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
         VkPipelineMultisampleStateCreateInfo multisampleInfo;
         VkPipelineColorBlendAttachmentState colorBlendAttachment;
-        VkPipelineColorBlendStateCreateInfo colorBlendInfo;
         VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
         VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
         VkRenderPass renderPass = VK_NULL_HANDLE;
-        uint32_t subpass = 0;
+        unsigned int subpass = 0;
     };
     class Pipeline {
         Device* device;
@@ -34,6 +34,8 @@ namespace Eng {
         ~Pipeline();
         
         void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
+        void bind(VkCommandBuffer commandBuffer);
+
         static PipelineConfigInfo createDefaultConfig(const ivec2& windowSize);
     };
 }

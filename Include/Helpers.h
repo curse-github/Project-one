@@ -1,5 +1,7 @@
 #ifndef __HELPERS
 #define __HELPERS
+#define _DEBUG
+#define VSYNC
 
 #define GLFW_INCLUDE_VULKAN
 #define GLM_FORCE_RADIANS
@@ -17,6 +19,7 @@ using glm::ivec2;
 #include <set>
 #include <unordered_set>
 #include <cstring>
+#include <array>
 
 namespace Eng {
     #pragma region vulkan structs
@@ -26,8 +29,8 @@ namespace Eng {
         std::vector<VkPresentModeKHR> presentModes;
     };
     struct QueueFamilyIndices {
-        uint32_t graphicsFamily;
-        uint32_t presentFamily;
+        unsigned int graphicsFamily;
+        unsigned int presentFamily;
         bool graphicsFamilyHasValue = false;
         bool presentFamilyHasValue = false;
         bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }

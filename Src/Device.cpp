@@ -11,7 +11,7 @@ namespace Eng {
         createLogicalDevice();
         createCommandPool();
     }
-    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator);
+    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
     Device::~Device() {
         vkDestroyCommandPool(device, commandPool, nullptr);
         vkDestroyDevice(device, nullptr);
@@ -21,11 +21,11 @@ namespace Eng {
         vkDestroyInstance(instance, nullptr);
     }
     // debug functions
-    VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
+    VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
         std::cerr << "validation layer: " << pCallbackData->pMessage << '\n';
         return VK_FALSE;
     }
-    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger) {
+    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
         PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
             instance,
             "vkCreateDebugUtilsMessengerEXT");
@@ -34,7 +34,7 @@ namespace Eng {
         else
             return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
-    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator) {
+    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
         PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
             instance,
             "vkDestroyDebugUtilsMessengerEXT");
@@ -51,9 +51,9 @@ namespace Eng {
             throw std::runtime_error("validation layers requested, but not available!");
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "LittleVulkanEngine App";
+        appInfo.pApplicationName = "App";
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "No Engine";
+        appInfo.pEngineName = "Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.apiVersion = VK_API_VERSION_1_0;
         VkInstanceCreateInfo createInfo{};
@@ -67,7 +67,7 @@ namespace Eng {
             createInfo.enabledLayerCount = static_cast<unsigned int>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
             populateDebugMessengerCreateInfo(debugCreateInfo);
-            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
+            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT* )&debugCreateInfo;
         } else {
             createInfo.enabledLayerCount = 0;
             createInfo.pNext = nullptr;
@@ -160,7 +160,7 @@ namespace Eng {
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
         std::vector<VkLayerProperties> availableLayers(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-        for (const char *layerName : validationLayers) {
+        for (const char* layerName : validationLayers) {
             bool layerFound = false;
             for (const VkLayerProperties& layerProperties : availableLayers) {
                 if (strcmp(layerName, layerProperties.layerName) == 0) {
@@ -173,11 +173,11 @@ namespace Eng {
         }
         return true;
     }
-    std::vector<const char *> Device::getRequiredExtensions() {
+    std::vector<const char* > Device::getRequiredExtensions() {
         unsigned int glfwExtensionCount = 0;
-        const char **glfwExtensions;
+        const char** glfwExtensions;
         glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-        std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+        std::vector<const char* > extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
         for (size_t i = 0; i < instanceExtensions.size(); i++)
             extensions.push_back(instanceExtensions[i]);
         if (enableValidationLayers)

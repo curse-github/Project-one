@@ -11,9 +11,9 @@ namespace Eng {
         bool enableValidationLayers = true;
         // vulkan things
         VkPhysicalDeviceProperties properties;
-        const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-        const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-        const std::vector<const char *> instanceExtensions = {"VK_NV_external_memory_capabilities"};
+        const std::vector<const char* > validationLayers = {"VK_LAYER_KHRONOS_validation"};
+        const std::vector<const char* > deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+        const std::vector<const char* > instanceExtensions = {"VK_NV_external_memory_capabilities"};
     public:
         VkInstance instance;
         VkDebugUtilsMessengerEXT debugMessenger;
@@ -47,7 +47,7 @@ namespace Eng {
         void createCommandPool();
 
         bool checkValidationLayerSupport();
-        std::vector<const char *> getRequiredExtensions();
+        std::vector<const char* > getRequiredExtensions();
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
         void hasGflwRequiredInstanceExtensions();
         bool isDeviceSuitable(VkPhysicalDevice device);

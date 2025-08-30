@@ -5,12 +5,21 @@
 #include "Window.h"
 #include "Device.h"
 #include "Pipeline.h"
+#include "Swapchain.h"
 
 namespace Eng {
     class Engine {
         Window window;
         Device device;
-        Pipeline pipeline;
+        Swapchain swapchain;
+        Pipeline* pipeline;
+        VkPipelineLayout pipelineLayout;
+        std::vector<VkCommandBuffer> commandBuffers;
+
+        void createPipelineLayout();
+        void createPipeline();
+        void createCommandBuffers();
+        void drawFrame();
     public:
         Engine(const std::string& windowName, const ivec2& windowSize);
         Engine(const Engine& copy) = delete;

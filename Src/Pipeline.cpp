@@ -1,20 +1,22 @@
 #include "Pipeline.h"
 
-// pipeline
-// input assembler -> vertex shader -> rasterization -> fragment shader -> color blending
 namespace Eng {
     Pipeline::Pipeline(Device* _device, const std::string& vert, const std::string& frag, const PipelineConfigInfo& config) : device(_device) {
         assert(config.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no pipelineLayout provided configInfo");
         assert(config.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no renderPass provided configInfo");
         static std::vector<char> vertCode = readFile(vert);
         static std::vector<char> fragCode = readFile(frag);
+#ifdef _DEBUG
+        std::cout << "vertCode length = " << vertCode.size() << '\n';
+        std::cout << "fragCode length = " << fragCode.size() << '\n';
+#endif
 
         createShaderModule(vertCode, &vertShaderModule);
         createShaderModule(fragCode, &fragShaderModule);
         VkPipelineShaderStageCreateInfo shaderStages[2];
         shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStages[1].pNext = nullptr;
-        shaderStages[1].flags = 0;
+        shaderStages[0].pNext = nullptr;
+        shaderStages[0].flags = 0;
         shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
         shaderStages[0].module = vertShaderModule;
         shaderStages[0].pName = "main";
@@ -37,9 +39,20 @@ namespace Eng {
         VkPipelineViewportStateCreateInfo viewportInfo{};
         viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportInfo.viewportCount = 1;
-        viewportInfo.scissorCount = 1;
         viewportInfo.pViewports = &config.viewport;
+        viewportInfo.scissorCount = 1;
         viewportInfo.pScissors = &config.scissor;
+        
+        VkPipelineColorBlendStateCreateInfo colorBlendInfo{};
+        colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlendInfo.logicOpEnable = VK_FALSE;
+        colorBlendInfo.logicOp = VK_LOGIC_OP_COPY; // Optional, since logic operation is disabled
+        colorBlendInfo.attachmentCount = 1;
+        colorBlendInfo.pAttachments = &config.colorBlendAttachment;
+        colorBlendInfo.blendConstants[0] = 0.0f; // Optional, since it is just set to 0;
+        colorBlendInfo.blendConstants[1] = 0.0f; // Optional, since it is just set to 0;
+        colorBlendInfo.blendConstants[2] = 0.0f; // Optional, since it is just set to 0;
+        colorBlendInfo.blendConstants[3] = 0.0f; // Optional, since it is just set to 0;
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -50,7 +63,7 @@ namespace Eng {
         pipelineInfo.pInputAssemblyState = &config.inputAssemblyInfo;
         pipelineInfo.pRasterizationState = &config.rasterizationInfo;
         pipelineInfo.pMultisampleState = &config.multisampleInfo;
-        pipelineInfo.pColorBlendState = &config.colorBlendInfo;
+        pipelineInfo.pColorBlendState = &colorBlendInfo;
         pipelineInfo.pDepthStencilState = &config.depthStencilInfo;
         pipelineInfo.pDynamicState = nullptr;// changing line width settings dynamically
         pipelineInfo.layout = config.pipelineLayout;
@@ -59,11 +72,10 @@ namespace Eng {
         pipelineInfo.basePipelineIndex = -1;
         // VK_NULL_HANDLE is used for one pipeline to derive from another, which can be more efficient for the GPU
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-
+        
         // VK_NULL_HANDLE is for a cache, used for optimization
-        if (vkCreateGraphicsPipelines(device->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(device->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
             throw std::runtime_error("failed to create graphics pipeline");
-        }
     }
     Pipeline::~Pipeline() {
         vkDestroyShaderModule(device->device, vertShaderModule, nullptr);
@@ -79,10 +91,16 @@ namespace Eng {
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         createInfo.codeSize = code.size();
         createInfo.pCode = reinterpret_cast<const unsigned int*>(code.data());
-        if (vkCreateShaderModule(device->device, &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
+        if (vkCreateShaderModule(device->device, &createInfo, nullptr, shaderModule) != VK_SUCCESS)
             throw std::runtime_error("failed to create shader module");
-        }
     }
+    void Pipeline::bind(VkCommandBuffer commandBuffer) {
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+    }
+
+
+
+
     PipelineConfigInfo Pipeline::createDefaultConfig(const ivec2& windowSize) {
         PipelineConfigInfo configInfo{};
         // viewport, IMPORTANT, very useful for moving the viewport around and squishing it
@@ -94,7 +112,7 @@ namespace Eng {
         configInfo.viewport.maxDepth = 0.0f;
         // scissor
         configInfo.scissor.offset = {0, 0};
-        configInfo.scissor.offset = {windowSize.x, windowSize.y};
+        configInfo.scissor.extent = {static_cast<unsigned int>(windowSize.x), static_cast<unsigned int>(windowSize.y)};
         // inputAssemblyInfo
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;// IMPORTANT, might be changed soon
@@ -130,15 +148,6 @@ namespace Eng {
         configInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional, since blending is disabled
         configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional, since blending is disabled
         configInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional, since blending is disabled
-        configInfo.colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        configInfo.colorBlendInfo.logicOpEnable = VK_FALSE;
-        configInfo.colorBlendInfo.logicOp = VK_LOGIC_OP_COPY; // Optional, since logic operation is disabled
-        configInfo.colorBlendInfo.attachmentCount = 1;
-        configInfo.colorBlendInfo.pAttachments = &configInfo.colorBlendAttachment;
-        configInfo.colorBlendInfo.blendConstants[0] = 0.0f; // Optional, since it is just set to 0;
-        configInfo.colorBlendInfo.blendConstants[1] = 0.0f; // Optional, since it is just set to 0;
-        configInfo.colorBlendInfo.blendConstants[2] = 0.0f; // Optional, since it is just set to 0;
-        configInfo.colorBlendInfo.blendConstants[3] = 0.0f; // Optional, since it is just set to 0;
         // depthStencilInfo
         configInfo.depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         configInfo.depthStencilInfo.depthTestEnable = VK_TRUE;
