@@ -3,10 +3,14 @@
 
 #include "Helpers.h"
 #include "Window.h"
+#include "Device.h"
+#include "Pipeline.h"
 
 namespace Eng {
     class Engine {
         Window window;
+        Device device;
+        Pipeline pipeline;
     public:
         Engine(const std::string& windowName, const ivec2& windowSize);
         Engine(const Engine& copy) = delete;

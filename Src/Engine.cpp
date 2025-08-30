@@ -1,8 +1,10 @@
 #include "Engine.h"
+#include <iostream>
 
 namespace Eng {
     Engine::Engine(const std::string& windowName, const ivec2& windowSize)
-    : window(windowName, windowSize) {
+    : window(windowName, windowSize), device(&window),
+    pipeline(&device, "out/shaders/simpleVert.vert.spv", "out/shaders/simpleFrag.frag.spv", Pipeline::createDefaultConfig(windowSize)) {
 
     }
 

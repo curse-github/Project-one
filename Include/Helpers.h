@@ -18,4 +18,23 @@ using glm::ivec2;
 #include <unordered_set>
 #include <cstring>
 
+namespace Eng {
+    #pragma region vulkan structs
+    struct SwapChainSupportDetails {
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
+    };
+    struct QueueFamilyIndices {
+        uint32_t graphicsFamily;
+        uint32_t presentFamily;
+        bool graphicsFamilyHasValue = false;
+        bool presentFamilyHasValue = false;
+        bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
+    };
+    #pragma endregion vulkan structs
+
+    std::vector<char> readFile(const std::string& path);
+}
+
 #endif
