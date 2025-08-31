@@ -2,8 +2,17 @@
 
 namespace Eng {
     Swapchain::Swapchain(Device* _device, VkExtent2D extent)
-        : device(_device), windowExtent{extent}
+        : device(_device), windowExtent{extent}, oldSwapchain(nullptr)
     {
+        init();
+    }
+    Swapchain::Swapchain(Device* _device, VkExtent2D extent, Swapchain* previousSwapchain)
+        : device(_device), windowExtent{extent}, oldSwapchain(previousSwapchain)
+    {
+        init();
+        previousSwapchain = nullptr;
+    }
+    void Swapchain::init() {
         createSwapChain();
         createImageViews();
         createRenderPass();
@@ -18,14 +27,14 @@ namespace Eng {
         for (VkImageView imageView : swapChainImageViews)
             vkDestroyImageView(device->device, imageView, nullptr);
         swapChainFramebuffers.clear();
-        if (swapChain != VK_NULL_HANDLE) {
-            vkDestroySwapchainKHR(device->device, swapChain, nullptr);
-            swapChain = VK_NULL_HANDLE;
-        }
         for (size_t i = 0; i < depthImages.size(); i++) {
             vkDestroyImageView(device->device, depthImageViews[i], nullptr);
             vkDestroyImage(device->device, depthImages[i], nullptr);
             vkFreeMemory(device->device, depthImageMemorys[i], nullptr);
+        }
+        if (swapChain != VK_NULL_HANDLE) {
+            vkDestroySwapchainKHR(device->device, swapChain, nullptr);
+            swapChain = VK_NULL_HANDLE;
         }
         vkDestroyRenderPass(device->device, renderPass, nullptr);
         // rather than exactly MAX_FRAMES_IN_FLIGHT, length of renderFinishedSemaphores
@@ -76,7 +85,7 @@ namespace Eng {
         createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
+        createInfo.oldSwapchain = (oldSwapchain == nullptr) ? VK_NULL_HANDLE : oldSwapchain->swapChain;
         if (vkCreateSwapchainKHR(device->device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
             throw std::runtime_error("failed to create swap chain!");
         // we only specified a minimum number of images in the swap chain, so the implementation is
@@ -284,9 +293,9 @@ namespace Eng {
 
 
     VkResult Swapchain::acquireNextImage(unsigned int* imageIndex) {
-        vkWaitForFences(device->device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+        vkWaitForFences(device->device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
         // imageAvailableSemaphores[currentFrame] must be a not signaled semaphore
-        VkResult result = vkAcquireNextImageKHR(device->device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, imageIndex);
+        VkResult result = vkAcquireNextImageKHR(device->device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, imageIndex);
         return result;
     }
     VkResult Swapchain::submitCommandBuffers(const VkCommandBuffer* buffers, unsigned int* imageIndex) {
@@ -308,16 +317,15 @@ namespace Eng {
         vkResetFences(device->device, 1, &inFlightFences[currentFrame]);
         if (vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
             throw std::runtime_error("failed to submit draw command buffer!");
+        VkSwapchainKHR swapChains[] = {swapChain};
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
-        VkSwapchainKHR swapChains[] = {swapChain};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = imageIndex;
-        VkResult result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-        return result;
+        return vkQueuePresentKHR(device->presentQueue, &presentInfo);
     }
 };

@@ -8,13 +8,19 @@
 // input assembler -> vertex shader -> rasterization -> fragment shader -> color blending
 namespace Eng {
     struct PipelineConfigInfo {
-        VkViewport viewport;
-        VkRect2D scissor;
+        PipelineConfigInfo(const PipelineConfigInfo& copy) = delete;
+        PipelineConfigInfo& operator=(const PipelineConfigInfo& copy) = delete;
+        PipelineConfigInfo(PipelineConfigInfo&& move) = delete;
+        PipelineConfigInfo& operator=(PipelineConfigInfo&& move) = delete;
+
+        VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
         VkPipelineMultisampleStateCreateInfo multisampleInfo;
         VkPipelineColorBlendAttachmentState colorBlendAttachment;
         VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+        std::vector<VkDynamicState> dynamicStateEnables;
+        VkPipelineDynamicStateCreateInfo dynamicStateInfo;
         VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
         VkRenderPass renderPass = VK_NULL_HANDLE;
         unsigned int subpass = 0;
@@ -35,7 +41,7 @@ namespace Eng {
         void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
         void bind(VkCommandBuffer commandBuffer);
 
-        static PipelineConfigInfo createDefaultConfig(const ivec2& windowSize);
+        static void createDefaultConfig(PipelineConfigInfo& config);
     };
 }
 

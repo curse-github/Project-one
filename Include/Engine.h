@@ -12,17 +12,21 @@ namespace Eng {
     class Engine {
         Window window;
         Device device;
-        Swapchain swapchain;
+        Swapchain* swapchain;
         Pipeline* pipeline;
         VkPipelineLayout pipelineLayout;
         std::vector<VkCommandBuffer> commandBuffers;
         std::vector<Model*> models;
+        
+        bool started = false;
 
         void createPipelineLayout();
-        void createPipeline();
+        void recreateSwapchain();
+        void recreatePipeline();
         void createCommandBuffers();
+        void recordCommandBuffer(const int& imageIndex);
         void drawFrame();
-        bool started = false;
+        void freeCommandBuffers();
     public:
         Engine(const std::string& windowName, const ivec2& windowSize);
         Engine(const Engine& copy) = delete;
