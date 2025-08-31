@@ -8,7 +8,10 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
+using glm::vec2;
 using glm::ivec2;
+#include <glm/vec3.hpp>
+using glm::vec3;
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <vector>
@@ -20,9 +23,9 @@ using glm::ivec2;
 #include <unordered_set>
 #include <cstring>
 #include <array>
+#include <cassert>
 
 namespace Eng {
-    #pragma region vulkan structs
     struct SwapChainSupportDetails {
         VkSurfaceCapabilitiesKHR capabilities;
         std::vector<VkSurfaceFormatKHR> formats;
@@ -35,7 +38,6 @@ namespace Eng {
         bool presentFamilyHasValue = false;
         bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
     };
-    #pragma endregion vulkan structs
 
     std::vector<char> readFile(const std::string& path);
 }

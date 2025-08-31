@@ -2,8 +2,8 @@
 
 namespace Eng {
     Pipeline::Pipeline(Device* _device, const std::string& vert, const std::string& frag, const PipelineConfigInfo& config) : device(_device) {
-        assert(config.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no pipelineLayout provided configInfo");
-        assert(config.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline:: no renderPass provided configInfo");
+        assert((config.pipelineLayout != VK_NULL_HANDLE) && "Cannot create graphics pipeline:: no pipelineLayout provided configInfo");
+        assert((config.renderPass != VK_NULL_HANDLE) && "Cannot create graphics pipeline:: no renderPass provided configInfo");
         static std::vector<char> vertCode = readFile(vert);
         static std::vector<char> fragCode = readFile(frag);
 #ifdef _DEBUG
@@ -29,12 +29,14 @@ namespace Eng {
         shaderStages[1].pName = "main";
         shaderStages[1].pSpecializationInfo = nullptr;
 
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions = Model::Vertex::getBindingDescriptions();
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions = Model::Vertex::getAttributeDescriptions();
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexInputInfo.vertexAttributeDescriptionCount = 0;
-        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-        vertexInputInfo.vertexBindingDescriptionCount = 0;
-        vertexInputInfo.pVertexBindingDescriptions = nullptr;
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(attributeDescriptions.size());
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+        vertexInputInfo.vertexBindingDescriptionCount = static_cast<unsigned int>(bindingDescriptions.size());
+        vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
         
         VkPipelineViewportStateCreateInfo viewportInfo{};
         viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

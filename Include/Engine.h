@@ -6,6 +6,7 @@
 #include "Device.h"
 #include "Pipeline.h"
 #include "Swapchain.h"
+#include "Model.h"
 
 namespace Eng {
     class Engine {
@@ -15,11 +16,13 @@ namespace Eng {
         Pipeline* pipeline;
         VkPipelineLayout pipelineLayout;
         std::vector<VkCommandBuffer> commandBuffers;
+        std::vector<Model*> models;
 
         void createPipelineLayout();
         void createPipeline();
         void createCommandBuffers();
         void drawFrame();
+        bool started = false;
     public:
         Engine(const std::string& windowName, const ivec2& windowSize);
         Engine(const Engine& copy) = delete;
@@ -28,6 +31,7 @@ namespace Eng {
         Engine& operator=(Engine&& move) = delete;
         ~Engine();
 
+        void addModel(const std::vector<Model::Vertex>& vertices);
         void start();
         void loop();
     };

@@ -1,10 +1,9 @@
 #ifndef __PIPELINE
 #define __PIPELINE
 
-#include <cassert>
-
 #include "Helpers.h"
 #include "Device.h"
+#include "Model.h"
 
 // input assembler -> vertex shader -> rasterization -> fragment shader -> color blending
 namespace Eng {

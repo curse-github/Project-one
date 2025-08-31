@@ -1,8 +1,8 @@
-O_BUILD = g++ -I./Include -I./lib/Include -I$(VULKAN_SDK)/Include -o
+O_BUILD = g++ -O3 -march=native -funroll-loops -flto -I./Include -I./lib/Include -I$(VULKAN_SDK)/Include -o
 SPV_BUILD = $(VULKAN_SDK)/Bin/glslc.exe -o
-EXE_BUILD = g++ -o ./out/app.exe -L./Lib -L$(VULKAN_SDK)/Lib -o
+EXE_BUILD = g++ -O3 -march=native -funroll-loops -flto -L./Lib -L$(VULKAN_SDK)/Lib -o
 
-Files = app Window Engine Device Pipeline Swapchain Helpers
+Files = app Window Engine Device Pipeline Swapchain Model Helpers
 Shaders = simpleVert.vert simpleFrag.frag
 
 ./out/%.o: ./Include/%.h | ./src/%.cpp

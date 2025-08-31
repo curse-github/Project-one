@@ -6,17 +6,20 @@ namespace Eng {
         : window(windowName, windowSize), device(&window),
         swapchain(&device, VkExtent2D{static_cast<unsigned int>(windowSize.x), static_cast<unsigned int>(windowSize.y)}), pipeline(nullptr)
     {
-        createPipelineLayout();
-        createPipeline();
-        createCommandBuffers();
     }
 
     Engine::~Engine() {
+        for (Model*& model : models)
+            delete model;
         delete pipeline;
         vkDestroyPipelineLayout(device.device, pipelineLayout, nullptr);
         glfwTerminate();
     }
     void Engine::start() {
+        createPipelineLayout();
+        createPipeline();
+        createCommandBuffers();
+        started = true;
     }
     void Engine::loop() {
         while(!window.shouldClose()) {
@@ -30,6 +33,9 @@ namespace Eng {
 
 
     
+    void Engine::addModel(const std::vector<Model::Vertex>& vertices) {
+        models.push_back(new Model(&device, vertices));
+    }
     void Engine::createPipelineLayout() {
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -81,7 +87,10 @@ namespace Eng {
 
             vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
             pipeline->bind(commandBuffers[i]);
-            vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);// 3 vertices, 1 instance, (0,0) offset
+            for (Model*& model : models) {
+                model->bind(commandBuffers[i]);
+                model->draw(commandBuffers[i]);
+            }
 
             vkCmdEndRenderPass(commandBuffers[i]);
             if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
