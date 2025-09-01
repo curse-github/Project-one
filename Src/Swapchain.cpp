@@ -127,9 +127,6 @@ namespace Eng {
         colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        VkAttachmentReference colorAttachmentRef{};
-        colorAttachmentRef.attachment = 0;
-        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         // attachement 1, depth buffer
         VkAttachmentDescription depthAttachment{};
         depthAttachment.format = findDepthFormat();
@@ -140,35 +137,39 @@ namespace Eng {
         depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
+
+        VkAttachmentReference colorAttachmentRef{};
+        colorAttachmentRef.attachment = 0;
+        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         VkAttachmentReference depthAttachmentRef{};
         depthAttachmentRef.attachment = 1;
         depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        VkSubpassDescription VkSubpassDependency2KHR{};
-        VkSubpassDependency2KHR.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        VkSubpassDependency2KHR.colorAttachmentCount = 1;
-        VkSubpassDependency2KHR.pColorAttachments = &colorAttachmentRef;
-        VkSubpassDependency2KHR.pDepthStencilAttachment = &depthAttachmentRef;
+        VkSubpassDescription subpassDescription{};
+        subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpassDescription.colorAttachmentCount = 1;
+        subpassDescription.pColorAttachments = &colorAttachmentRef;
+        subpassDescription.pDepthStencilAttachment = &depthAttachmentRef;
         VkSubpassDependency dependency{};
-        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependency.srcAccessMask = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.dstSubpass = 0;
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
+        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        dependency.srcAccessMask = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.attachmentCount = static_cast<unsigned int>(attachments.size());
         renderPassInfo.pAttachments = attachments.data();
         renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses =& VkSubpassDependency2KHR;
+        renderPassInfo.pSubpasses =& subpassDescription;
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies =& dependency;
         if (vkCreateRenderPass(device->device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
             throw std::runtime_error("failed to create render pass!");
     }
     void Swapchain::createDepthResources() {
-        VkFormat depthFormat = findDepthFormat();
+        swapChainDepthFormat = findDepthFormat();
         depthImages.resize(swapChainImages.size());
         depthImageMemorys.resize(swapChainImages.size());
         depthImageViews.resize(swapChainImages.size());
@@ -181,7 +182,7 @@ namespace Eng {
             imageInfo.extent.depth = 1;
             imageInfo.mipLevels = 1;
             imageInfo.arrayLayers = 1;
-            imageInfo.format = depthFormat;
+            imageInfo.format = swapChainDepthFormat;
             imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
             imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -193,7 +194,7 @@ namespace Eng {
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             viewInfo.image = depthImages[i];
             viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            viewInfo.format = depthFormat;
+            viewInfo.format = swapChainDepthFormat;
             viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
             viewInfo.subresourceRange.baseMipLevel = 0;
             viewInfo.subresourceRange.levelCount = 1;
@@ -298,6 +299,9 @@ namespace Eng {
         VkResult result = vkAcquireNextImageKHR(device->device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, imageIndex);
         return result;
     }
+    void Swapchain::waitForCommandBuffer() {
+        vkWaitForFences(device->device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    }
     VkResult Swapchain::submitCommandBuffers(const VkCommandBuffer* buffers, unsigned int* imageIndex) {
         if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
             vkWaitForFences(device->device, 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
@@ -327,5 +331,8 @@ namespace Eng {
         presentInfo.pImageIndices = imageIndex;
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
         return vkQueuePresentKHR(device->presentQueue, &presentInfo);
+    }
+    bool Swapchain::swapchainsCompatible(const Swapchain& otherSwapchain) const {
+        return (otherSwapchain.swapChainDepthFormat == swapChainDepthFormat) && (otherSwapchain.swapChainImageFormat == swapChainImageFormat);
     }
 };

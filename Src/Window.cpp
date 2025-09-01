@@ -11,6 +11,7 @@ namespace Eng {
     }
     Window::~Window() {
         glfwDestroyWindow(window);
+        glfwTerminate();
     }
 
 

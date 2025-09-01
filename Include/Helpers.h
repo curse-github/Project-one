@@ -13,7 +13,11 @@ using glm::ivec2;
 #include <glm/vec3.hpp>
 using glm::vec3;
 #include <glm/vec4.hpp>
+using glm::vec4;
 #include <glm/mat4x4.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
+using glm::mat4;
 #include <vector>
 #include <fstream>
 #include <stdexcept>

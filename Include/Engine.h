@@ -5,28 +5,21 @@
 #include "Window.h"
 #include "Device.h"
 #include "Pipeline.h"
-#include "Swapchain.h"
+#include "Renderer.h"
 #include "Model.h"
+#include "GameObject.h"
+#include "RenderSystem.h"
 
 namespace Eng {
     class Engine {
         Window window;
         Device device;
-        Swapchain* swapchain;
-        Pipeline* pipeline;
-        VkPipelineLayout pipelineLayout;
-        std::vector<VkCommandBuffer> commandBuffers;
-        std::vector<Model*> models;
+        Renderer renderer;
+
+        Model* model;
+        std::vector<GameObject> objects;
         
         bool started = false;
-
-        void createPipelineLayout();
-        void recreateSwapchain();
-        void recreatePipeline();
-        void createCommandBuffers();
-        void recordCommandBuffer(const int& imageIndex);
-        void drawFrame();
-        void freeCommandBuffers();
     public:
         Engine(const std::string& windowName, const ivec2& windowSize);
         Engine(const Engine& copy) = delete;
@@ -35,7 +28,7 @@ namespace Eng {
         Engine& operator=(Engine&& move) = delete;
         ~Engine();
 
-        void addModel(const std::vector<Model::Vertex>& vertices);
+        void addObject(const vec3& position, const vec3& scale, const float& rotation);
         void start();
         void loop();
     };

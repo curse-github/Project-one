@@ -16,13 +16,12 @@ namespace Eng {
         std::vector<VkDeviceMemory> depthImageMemorys;
         std::vector<VkImageView> depthImageViews;
         std::vector<VkImage> swapChainImages;
-        size_t currentFrame = 0;
+        unsigned int currentFrame = 0;
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
         std::vector<VkFramebuffer> swapChainFramebuffers;
         VkRenderPass renderPass;
         std::vector<VkImageView> swapChainImageViews;
-        VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
 
         Swapchain(Device* _device, VkExtent2D extent);
@@ -34,7 +33,9 @@ namespace Eng {
         ~Swapchain();
 
         VkResult acquireNextImage(unsigned int* imageIndex);
+        void waitForCommandBuffer();
         VkResult submitCommandBuffers(const VkCommandBuffer* buffers, unsigned int* imageIndex);
+        bool swapchainsCompatible(const Swapchain& otherSwapchain) const;
     private:
         void init();
         void createSwapChain();
@@ -51,10 +52,11 @@ namespace Eng {
         VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
         VkFormat findDepthFormat();
 
+        VkFormat swapChainImageFormat;
+        VkFormat swapChainDepthFormat;
         std::vector<VkSemaphore> imageAvailableSemaphores;
         std::vector<VkSemaphore> renderFinishedSemaphores;
         std::vector<VkFence> inFlightFences;
-    public:
         std::vector<VkFence> imagesInFlight;
     };
 }
