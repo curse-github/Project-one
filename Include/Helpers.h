@@ -1,11 +1,13 @@
 #ifndef __HELPERS
 #define __HELPERS
-#define _DEBUG
+// #define _DEBUG
 #define VSYNC
 
 #define DEG45 0.78539816339f
 #define DEG90 1.5707963268f
 #define DEG180 3.14159265359f
+#define DEG270 4.71238898039f
+#define DEG360 6.28318530718f
 
 #define GLFW_INCLUDE_VULKAN
 #define GLM_FORCE_RADIANS
@@ -32,6 +34,7 @@ using glm::mat4;
 #include <cstring>
 #include <array>
 #include <cassert>
+#include <chrono>
 
 namespace Eng {
     struct SwapChainSupportDetails {

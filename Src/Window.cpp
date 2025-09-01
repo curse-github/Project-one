@@ -32,4 +32,7 @@ namespace Eng {
         }
         return true;
     }
+    bool Window::keyPressed(const int& key) {
+        return glfwGetKey(window, key) == GLFW_PRESS;
+    }
 }

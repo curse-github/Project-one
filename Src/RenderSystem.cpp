@@ -41,8 +41,9 @@ namespace Eng {
     }
     void SimpleRenderSystem::recordObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& objects, const Camera& camera) {
         pipeline->bind(commandBuffer);
+        mat4 projectionView = camera.projection*camera.view;
         for (GameObject& object : objects) {
-            SimplePushConstantData push{camera.projection,object.transform.getMat()};
+            SimplePushConstantData push{projectionView, object.transform.getMat()};
             vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
             object.model->bind(commandBuffer);
             object.model->draw(commandBuffer);

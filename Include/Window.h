@@ -18,8 +18,10 @@ namespace Eng {
         Window(Window&& move) = delete;
         Window& operator=(Window&& move) = delete;
         ~Window();
+
         bool shouldClose();
         bool createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
+        bool keyPressed(const int& key);
     };
 }
 

@@ -14,6 +14,7 @@ namespace Eng {
         struct Vertex {
             vec3 position;
             vec3 color;
+            vec3 normal;
             
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
