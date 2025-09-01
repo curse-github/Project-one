@@ -6,9 +6,11 @@
 #include "Pipeline.h"
 #include "Model.h"
 #include "GameObject.h"
+#include "Camera.h"
 
 namespace Eng {
     struct SimplePushConstantData {
+        glm::mat4 projection{1.0f};
         glm::mat4 transform{1.0f};
     };
     class SimpleRenderSystem {
@@ -27,7 +29,7 @@ namespace Eng {
         SimpleRenderSystem& operator=(SimpleRenderSystem&& move) = delete;
         ~SimpleRenderSystem();
         
-        void recordObjects(VkCommandBuffer commandBuffer, const std::vector<GameObject>& objects);
+        void recordObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& objects, const Camera& camera);
     };
 }
 

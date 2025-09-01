@@ -9,6 +9,7 @@
 #include "Model.h"
 #include "GameObject.h"
 #include "RenderSystem.h"
+#include "Camera.h"
 
 namespace Eng {
     class Engine {
@@ -28,7 +29,7 @@ namespace Eng {
         Engine& operator=(Engine&& move) = delete;
         ~Engine();
 
-        void addObject(const vec3& position, const vec3& scale, const float& rotation);
+        void addObject(const vec3& position, const vec3& scale, const vec3& rotation);
         void start();
         void loop();
     };

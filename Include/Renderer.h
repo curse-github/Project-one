@@ -36,6 +36,7 @@ namespace Eng {
         VkRenderPass getRenderPass() {
             return swapchain->renderPass;
         }
+        float getAspectRatio() { return (float)swapchain->swapChainExtent.width/swapchain->swapChainExtent.height; };
 
         VkCommandBuffer beginFrame();
         void beginRenderPass(VkCommandBuffer commandBuffer);

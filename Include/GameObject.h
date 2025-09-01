@@ -6,10 +6,10 @@
 
 namespace Eng {
     using id_t = unsigned int;
-    struct Transform {
+    struct TransformComponent {
         vec3 position;
         vec3 scale;
-        float rotation;
+        vec3 rotation;
         mat4 getMat() const;
     };
     class GameObject {
@@ -24,7 +24,7 @@ namespace Eng {
         ~GameObject();
 
         Model* model;
-        Transform transform;
+        TransformComponent transform;
     };
 }
 

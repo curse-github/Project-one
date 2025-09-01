@@ -39,10 +39,10 @@ namespace Eng {
         pipelineConfig.pipelineLayout = pipelineLayout;
         pipeline = new Pipeline(device, "shaders/simpleVert.vert.spv", "shaders/simpleFrag.frag.spv", pipelineConfig);
     }
-    void SimpleRenderSystem::recordObjects(VkCommandBuffer commandBuffer, const std::vector<GameObject>& objects) {
+    void SimpleRenderSystem::recordObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& objects, const Camera& camera) {
         pipeline->bind(commandBuffer);
-        for (const GameObject& object : objects) {
-            SimplePushConstantData push{object.transform.getMat()};
+        for (GameObject& object : objects) {
+            SimplePushConstantData push{camera.projection,object.transform.getMat()};
             vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
             object.model->bind(commandBuffer);
             object.model->draw(commandBuffer);

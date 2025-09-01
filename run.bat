@@ -7,6 +7,7 @@ if not errorlevel 0 GOTO error
 GOTO noerror
 :error
 pause
+make clean
 :noerror
 cd ..
 make clean

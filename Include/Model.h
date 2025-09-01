@@ -12,7 +12,7 @@ namespace Eng {
         unsigned int vertexCount;
     public:
         struct Vertex {
-            vec2 position;
+            vec3 position;
             vec3 color;
             
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();

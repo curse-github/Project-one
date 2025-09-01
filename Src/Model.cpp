@@ -36,15 +36,18 @@ namespace Eng {
     }
     std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescriptions() {
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions(2);
+        // "VK_FORMAT_R32_SFLOAT" is 1 floats
+        // "VK_FORMAT_R32G32_SFLOAT" is 2 floats
+        // "VK_FORMAT_R32G32B32_SFLOAT" is 3 floats
         // position attribute
         attributeDescriptions[0].location = 0;
         attributeDescriptions[0].binding = 0;
-        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;// 2 floats
+        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributeDescriptions[0].offset = offsetof(Vertex, position);
         // color attribute
         attributeDescriptions[1].location = 1;
         attributeDescriptions[1].binding = 0;
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;// 3 floats
+        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributeDescriptions[1].offset = offsetof(Vertex, color);
         return attributeDescriptions;
     }
