@@ -1,6 +1,5 @@
 #ifndef __HELPERS
 #define __HELPERS
-#define _DEBUG
 // #define VSYNC
 
 #define DEG45 0.78539816339f

@@ -264,14 +264,14 @@ namespace Eng {
         // this picks the mailbox type by default and v-sync as the fallback if that does not work
         for (const VkPresentModeKHR& availablePresentMode : availablePresentModes) {
             if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
                 std::cout << "Present mode: Mailbox" << '\n';
 #endif
                 return availablePresentMode;
             }
         }
 #endif
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
         std::cout << "Present mode: V-Sync" << '\n';
 #endif
         return VK_PRESENT_MODE_FIFO_KHR;

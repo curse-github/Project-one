@@ -5,11 +5,12 @@ layout (location = 1) in vec3 fragNormal;
 
 layout (location = 0) out vec4 outColor;
 
-layout(push_constant) uniform Push {
-    mat4 projectionView;
-    mat3 transform;
-} push;
+const float AMBIENT = 0.125;
+const vec3 DIRECTION_TO_LIGHT = normalize(vec3(1.0, -3.0, -1.0));
 
 void main() {
-    outColor = vec4(fragColor, 1.0);
+    float lightIntensity = max(dot(normalize(fragNormal), vec3(0.0, 0.0, -1.0)), 0.0);
+    lightIntensity = lightIntensity*(1.0-AMBIENT)+AMBIENT;
+
+    outColor = vec4(lightIntensity*fragColor, 1.0);
 }

@@ -16,7 +16,7 @@ namespace Eng {
         bool hasColors = false;
         std::vector<vec2> uvs;
         std::vector<vec3> normals;
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
         unsigned int numTris = 0;
 #endif
         std::unordered_map<Mesh::Vertex, unsigned int> uniqueVertices{};
@@ -115,7 +115,7 @@ namespace Eng {
                 } else ints.push_back(-1);
                 // do things with ints
                 if (ints.size() == 9) {
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
                     ++numTris;
 #endif
                     pushVertex({
@@ -137,7 +137,7 @@ namespace Eng {
                         positions[ints[6]*2+1]
                     }, data);
                 } else if (ints.size() == 12) {
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
                     numTris += 2;
 #endif
                     pushVertex({
@@ -181,7 +181,7 @@ namespace Eng {
             }
         }
         Mesh* meshFromObj(Device* device, const std::string& filePath) {
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
             std::chrono::_V2::system_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 #endif
             std::vector<char> file = readFile(filePath);
@@ -197,7 +197,7 @@ namespace Eng {
                 else line += file[i];
             }
             processLine(line, data);
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
             std::chrono::_V2::system_clock::time_point endTime = std::chrono::high_resolution_clock::now();
             float timeTook = std::chrono::duration<float, std::chrono::milliseconds::period>(endTime-startTime).count();
             std::cout << "reading file \"" << filePath << "\" took " << timeTook << "ms\n";
@@ -209,7 +209,7 @@ namespace Eng {
             hasColors = false;
             uvs.clear();
             normals.clear();
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
             numTris = 0;
 #endif
             return new Mesh(device, data);

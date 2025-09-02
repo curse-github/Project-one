@@ -13,15 +13,10 @@ layout(push_constant) uniform Push {
     mat4 normalMat;
 } push;
 
-const float AMBIENT = 0.125;
-const vec3 DIRECTION_TO_LIGHT = normalize(vec3(1.0, -3.0, -1.0));
-
 void main() {
     gl_Position = push.transform * vec4(position, 1.0);
     
-    vertNormal = normalize(mat3(push.normalMat) * normal);
-    float lightIntensity = max(dot(vertNormal, vec3(0.0, 0.0, -1.0)), 0.0);
-    lightIntensity = lightIntensity*(1.0-AMBIENT)+AMBIENT;
+    vertNormal = mat3(push.normalMat) * normal;
 
-    vertColor = lightIntensity*color;
+    vertColor = color;
 }

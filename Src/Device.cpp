@@ -118,7 +118,7 @@ namespace Eng {
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
         if (deviceCount == 0)
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
         std::cout << "Device count: " << deviceCount << '\n';// print number of available graphics cards
 #endif
         std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -132,7 +132,7 @@ namespace Eng {
         if (physicalDevice == VK_NULL_HANDLE)
             throw std::runtime_error("failed to find a suitable GPU!");
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
         std::cout << "physical device: " << properties.deviceName << '\n';// print name of graphics card
 #endif
     }
@@ -201,7 +201,7 @@ namespace Eng {
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
         std::vector<VkExtensionProperties> extensions(extensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
         // print out avaliable and required extensions to console
         std::cout << "available extensions:" << '\n';
         std::unordered_set<std::string> available;
@@ -267,7 +267,7 @@ namespace Eng {
         std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
         for (const VkExtensionProperties& extension : availableExtensions)
             requiredExtensions.erase(extension.extensionName);
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
         for (const std::string& extension : requiredExtensions)
             std::cout << "        device does not support \"" << extension << "\"\n";
 #endif

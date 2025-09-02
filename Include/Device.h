@@ -1,7 +1,7 @@
 #ifndef __DEVICE
 #define __DEVICE
 
-#if defined(_DEBUG) & defined(_WINDOWS)
+#if defined(_DEBUG) && (_DEBUG==1) && defined(_WINDOWS)
 #define VALIDATION_LAYERS
 #endif
 

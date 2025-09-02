@@ -6,7 +6,7 @@ namespace Eng {
         assert((config.renderPass != VK_NULL_HANDLE) && "Cannot create graphics pipeline:: no renderPass provided in config");
         static std::vector<char> vertCode = readFile(vert);
         static std::vector<char> fragCode = readFile(frag);
-#ifdef _DEBUG
+#if defined(_DEBUG) && (_DEBUG==1)
         std::cout << "vertCode length = " << vertCode.size() << '\n';
         std::cout << "fragCode length = " << fragCode.size() << '\n';
 #endif

@@ -1,13 +1,14 @@
 ifeq ($(OS),Windows_NT)
 LIB_DIR = ./Lib
-OS_ARGS = -D_WINDOWS=1
+CONST_ARGS = -D_WINDOWS=1
 else
 LIB_DIR = ./Lib/Linux
-OS_ARGS = -D_LINUX=1
+CONST_ARGS = -D_LINUX=1
 endif
+CONST_ARGS += -D_DEBUG=0
 
 SPV_BUILD = $(VULKAN_SDK)/Bin/glslc -o
-O_BUILD = g++ -O3 -march=native -funroll-loops -flto -I./Include -I./Lib/Include -I$(VULKAN_SDK)/Include $(OS_ARGS) -o
+O_BUILD = g++ -O3 -march=native -funroll-loops -flto -I./Include -I./Lib/Include -I$(VULKAN_SDK)/Include $(CONST_ARGS) -o
 EXE_BUILD = g++ -O3 -march=native -funroll-loops -flto -L$(LIB_DIR) -L$(VULKAN_SDK)/Lib -o
 
 Files = app Window Engine Device Pipeline Swapchain Mesh Renderer RenderSystem GameObject Camera Loaders Helpers
@@ -20,7 +21,11 @@ Shaders = simpleVert.vert simpleFrag.frag
 
 makefolders:
 	@-mkdir out
+ifeq ($(OS),Windows_NT)
+	@-mkdir out\shaders
+else
 	@-mkdir out/shaders
+endif
 shaders: $(Shaders:%=./out/shaders/%.spv)
 ./out/app.exe: makefolders shaders | $(Files:%=./out/%.o)
 	@$(EXE_BUILD) $@ $| -lglfw3 -lvulkan -lgdi32
