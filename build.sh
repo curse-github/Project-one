@@ -1,1 +1,0 @@
-make ./out/app.exe

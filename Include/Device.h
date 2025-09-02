@@ -1,6 +1,10 @@
 #ifndef __DEVICE
 #define __DEVICE
 
+#if defined(_DEBUG) & defined(_WINDOWS)
+#define VALIDATION_LAYERS
+#endif
+
 #include "Helpers.h"
 #include "Window.h"
 
@@ -8,15 +12,22 @@ namespace Eng {
     // https://drive.google.com/drive/folders/1Hs-3v_AFVbASmymY4I2UB-JWvW3-hTAV
     class Device {
         Window* window;
-        bool enableValidationLayers = true;
         // vulkan things
         VkPhysicalDeviceProperties properties;
         const std::vector<const char* > validationLayers = {"VK_LAYER_KHRONOS_validation"};
         const std::vector<const char* > deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-        const std::vector<const char* > instanceExtensions = {"VK_NV_external_memory_capabilities"};
+#if defined(_LINUX)
+        const std::vector<const char* > instanceExtensions = {};
+#else
+        const std::vector<const char* > instanceExtensions = {"VK_NV_external_memory_capabilities"};// not needed, and will cause errors on linux
+#endif
+#ifdef VALIDATION_LAYERS
+        VkDebugUtilsMessengerEXT debugMessenger;
+        bool checkValidationLayerSupport();
+        void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+#endif
     public:
         VkInstance instance;
-        VkDebugUtilsMessengerEXT debugMessenger;
         VkSurfaceKHR surface;
         VkDevice device;
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -40,15 +51,12 @@ namespace Eng {
     private:
 
         void createInstance();
-        void setupDebugMessenger();
         void createSurface();
         void pickPhysicalDevice();
         void createLogicalDevice();
         void createCommandPool();
 
-        bool checkValidationLayerSupport();
         std::vector<const char* > getRequiredExtensions();
-        void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
         void hasGflwRequiredInstanceExtensions();
         bool isDeviceSuitable(VkPhysicalDevice device);
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
