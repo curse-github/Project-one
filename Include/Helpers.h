@@ -1,7 +1,7 @@
 #ifndef __HELPERS
 #define __HELPERS
-// #define _DEBUG
-#define VSYNC
+#define _DEBUG
+// #define VSYNC
 
 #define DEG45 0.78539816339f
 #define DEG90 1.5707963268f
@@ -12,6 +12,7 @@
 #define GLFW_INCLUDE_VULKAN
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_ENABLE_EXPERIMENTAL
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
 using glm::vec2;
@@ -20,10 +21,12 @@ using glm::ivec2;
 using glm::vec3;
 #include <glm/vec4.hpp>
 using glm::vec4;
+#include <glm/mat3x3.hpp>
+using glm::mat3;
 #include <glm/mat4x4.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/transform.hpp>
 using glm::mat4;
+#include <glm/gtx/transform.hpp>
+#include <glm/gtx/hash.hpp>
 #include <vector>
 #include <fstream>
 #include <stdexcept>
@@ -35,6 +38,7 @@ using glm::mat4;
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <unordered_map>
 
 namespace Eng {
     struct SwapChainSupportDetails {
@@ -49,8 +53,14 @@ namespace Eng {
         bool presentFamilyHasValue = false;
         bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
     };
-
-    std::vector<char> readFile(const std::string& path);
 }
+
+std::vector<char> readFile(const std::string& path);
+// from: https://stackoverflow.com/a/57595105
+template <typename T, typename... Rest>
+void hashCombine(std::size_t& seed, const T& v, const Rest&... rest) {
+    seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    (hashCombine(seed, rest), ...);
+};
 
 #endif

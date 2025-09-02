@@ -4,54 +4,15 @@ namespace Eng {
     Engine::Engine(const std::string& windowName, const ivec2& windowSize)
         : window(windowName, windowSize), device(&window), renderer(&window, &device)
     {
-        model = new Model(&device, {
-            // top, y=+1, yellow
-            {{-1.0f,  1.0f, -1.0f}, {0.80f, 0.80f, 0.10f}, { 0.0f,  1.0f,  0.0f}},
-            {{ 1.0f,  1.0f, -1.0f}, {0.80f, 0.80f, 0.10f}, {0.0f, 1.0f, 0.0f}},
-            {{ 1.0f,  1.0f,  1.0f}, {0.80f, 0.80f, 0.10f}, {0.0f, 1.0f, 0.0f}},
-            {{-1.0f,  1.0f,  1.0f}, {0.80f, 0.80f, 0.10f}, {0.0f, 1.0f, 0.0f}},
-            {{-1.0f,  1.0f, -1.0f}, {0.80f, 0.80f, 0.10f}, {0.0f, 1.0f, 0.0f}},
-            {{ 1.0f,  1.0f,  1.0f}, {0.80f, 0.80f, 0.10f}, {0.0f, 1.0f, 0.0f}},
-            // right, x=+1, red
-            {{ 1.0f, -1.0f, -1.0f}, {0.80f, 0.10f, 0.10f}, { 1.0f,  0.0f,  0.0f}},
-            {{ 1.0f, -1.0f,  1.0f}, {0.80f, 0.10f, 0.10f}, {1.0f, 0.0f, 0.0f}},
-            {{ 1.0f,  1.0f,  1.0f}, {0.80f, 0.10f, 0.10f}, {1.0f, 0.0f, 0.0f}},
-            {{ 1.0f,  1.0f, -1.0f}, {0.80f, 0.10f, 0.10f}, {1.0f, 0.0f, 0.0f}},
-            {{ 1.0f, -1.0f, -1.0f}, {0.80f, 0.10f, 0.10f}, {1.0f, 0.0f, 0.0f}},
-            {{ 1.0f,  1.0f,  1.0f}, {0.80f, 0.10f, 0.10f}, {1.0f, 0.0f, 0.0f}},
-            // front, z=-1, green
-            {{-1.0f, -1.0f, -1.0f}, {0.10f, 0.80f, 0.10f}, { 0.0f,  0.0f, -1.0f}},
-            {{ 1.0f, -1.0f, -1.0f}, {0.10f, 0.80f, 0.10f}, { 0.0f,  0.0f, -1.0f}},
-            {{ 1.0f,  1.0f, -1.0f}, {0.10f, 0.80f, 0.10f}, { 0.0f,  0.0f, -1.0f}},
-            {{-1.0f,  1.0f, -1.0f}, {0.10f, 0.80f, 0.10f}, { 0.0f,  0.0f, -1.0f}},
-            {{-1.0f, -1.0f, -1.0f}, {0.10f, 0.80f, 0.10f}, { 0.0f,  0.0f, -1.0f}},
-            {{ 1.0f,  1.0f, -1.0f}, {0.10f, 0.80f, 0.10f}, { 0.0f,  0.0f, -1.0f}},
-            // left, x=-1
-            {{-1.0f, -1.0f,  1.0f}, {0.80f, 0.45f, 0.10f}, {-1.0f,  0.0f,  0.0f}},
-            {{-1.0f, -1.0f, -1.0f}, {0.80f, 0.45f, 0.10f}, {-1.0f,  0.0f,  0.0f}},
-            {{-1.0f,  1.0f, -1.0f}, {0.80f, 0.45f, 0.10f}, {-1.0f,  0.0f,  0.0f}},
-            {{-1.0f,  1.0f,  1.0f}, {0.80f, 0.45f, 0.10f}, {-1.0f,  0.0f,  0.0f}},
-            {{-1.0f, -1.0f,  1.0f}, {0.80f, 0.45f, 0.10f}, {-1.0f,  0.0f,  0.0f}},
-            {{-1.0f,  1.0f, -1.0f}, {0.80f, 0.45f, 0.10f}, {-1.0f,  0.0f,  0.0f}},
-            // back, z=+1
-            {{ 1.0f, -1.0f,  1.0f}, {0.10f, 0.10f, 0.80f}, { 0.0f,  0.0f,  1.0f}},
-            {{-1.0f, -1.0f,  1.0f}, {0.10f, 0.10f, 0.80f}, { 0.0f,  0.0f,  1.0f}},
-            {{-1.0f,  1.0f,  1.0f}, {0.10f, 0.10f, 0.80f}, { 0.0f,  0.0f,  1.0f}},
-            {{ 1.0f,  1.0f,  1.0f}, {0.10f, 0.10f, 0.80f}, { 0.0f,  0.0f,  1.0f}},
-            {{ 1.0f, -1.0f,  1.0f}, {0.10f, 0.10f, 0.80f}, { 0.0f,  0.0f,  1.0f}},
-            {{-1.0f,  1.0f,  1.0f}, {0.10f, 0.10f, 0.80f}, { 0.0f,  0.0f,  1.0f}},
-            // bottom, y=-1, white
-            {{ 1.0f, -1.0f,  1.0f}, {1.00f, 1.00f, 1.00f}, { 0.0f, -1.0f,  0.0f}},
-            {{ 1.0f, -1.0f, -1.0f}, {1.00f, 1.00f, 1.00f}, { 0.0f, -1.0f,  0.0f}},
-            {{-1.0f, -1.0f, -1.0f}, {1.00f, 1.00f, 1.00f}, { 0.0f, -1.0f,  0.0f}},
-            {{ 1.0f, -1.0f,  1.0f}, {1.00f, 1.00f, 1.00f}, { 0.0f, -1.0f,  0.0f}},
-            {{-1.0f, -1.0f, -1.0f}, {1.00f, 1.00f, 1.00f}, { 0.0f, -1.0f,  0.0f}},
-            {{-1.0f, -1.0f,  1.0f}, {1.00f, 1.00f, 1.00f}, { 0.0f, -1.0f,  0.0f}}
-        });
+        // meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/CubeWhite.obj"));
+        // meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/CubeRubix.obj"));
+        meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/flat_vase.obj"));
+        meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/smooth_vase.obj"));
     }
 
     Engine::~Engine() {
-        delete model;
+        for (Mesh* mesh : meshes)
+            delete mesh;
     }
     void Engine::start() {
         started = true;
@@ -84,6 +45,8 @@ namespace Eng {
         }
         return updated;
     }
+    std::chrono::_V2::system_clock::time_point lastPrint = std::chrono::high_resolution_clock::now();
+    unsigned int frames = 0;
     void Engine::loop() {
         SimpleRenderSystem renderSystem(&device, renderer.getRenderPass());
         Camera camera;
@@ -97,13 +60,20 @@ namespace Eng {
             std::chrono::_V2::system_clock::time_point newTime = std::chrono::high_resolution_clock::now();
             float dt = std::chrono::duration<float, std::chrono::seconds::period>(newTime-currentTime).count();
             currentTime = newTime;
-            std::cout << "fps: " << (1/dt) << '\n';
+            frames++;
+            if (std::chrono::duration<float, std::chrono::seconds::period>(currentTime-lastPrint).count() > 2) {
+                std::cout << "fps: " << (frames/2.0f) << '\n';
+                lastPrint = currentTime;
+                frames=0;
+            }
             if (pollMovement(glm::min(dt, 1.0f/30.0f), cameraTransform))
                 camera.setViewYXZ(cameraTransform.position, cameraTransform.rotation);
             camera.setProj(glm::radians(50.0f), renderer.getAspectRatio(), 0.1f, 100.0f);// camera.setOrtho(-aspect, aspect, 1, -1, -1, 1);
             VkCommandBuffer commandBuffer = renderer.beginFrame();
             if (commandBuffer != VK_NULL_HANDLE) {
                 renderer.beginRenderPass(commandBuffer);
+                for (GameObject& object : objects)
+                    object.transform.rotation.y += dt;
                 renderSystem.recordObjects(commandBuffer, objects, camera);
                 renderer.endRenderPass(commandBuffer);
                 renderer.endFrame();
@@ -111,10 +81,10 @@ namespace Eng {
         }
         vkDeviceWaitIdle(device.device);
     }
-    void Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation) {
+    void Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex) {
         if (started) return;
         GameObject object = GameObject::createGameObject();
-        object.model = model;
+        object.mesh = meshes[meshIndex];
         object.transform.position = position;
         object.transform.scale = scale;
         object.transform.rotation = rotation;

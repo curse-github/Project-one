@@ -43,10 +43,11 @@ namespace Eng {
         pipeline->bind(commandBuffer);
         mat4 projectionView = camera.projection*camera.view;
         for (GameObject& object : objects) {
-            SimplePushConstantData push{projectionView, object.transform.getMat()};
+            mat4 transform = object.transform.getTransformMat();
+            SimplePushConstantData push{projectionView*transform, object.transform.getNormalMat()};
             vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
-            object.model->bind(commandBuffer);
-            object.model->draw(commandBuffer);
+            object.mesh->bind(commandBuffer);
+            object.mesh->draw(commandBuffer);
         }
     }
 }

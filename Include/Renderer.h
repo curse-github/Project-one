@@ -5,7 +5,7 @@
 #include "Window.h"
 #include "Device.h"
 #include "Swapchain.h"
-#include "Model.h"
+#include "Mesh.h"
 
 namespace Eng {
     class Renderer {

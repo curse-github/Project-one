@@ -3,10 +3,15 @@ int main(int argc, char** argv) {
     Eng::Engine engine("Window!", {1920, 1080});
 
     engine.addObject(
-        {0.0f,  0.0, 2.5f},// position
-        {0.25f, 0.25f, 0.25f},// scale
-        {DEG45, DEG45, DEG90}// rotation
-    );
+        {0.5f,  0.0, 2.0f},// position
+        {2.0f, 2.0f, 2.0f},// scale
+        {0, 0, -DEG45}// rotation
+    , 0);
+    engine.addObject(
+        {-0.5f,  0.0, 2.0f},// position
+        {2.0f, 2.0f, 2.0f},// scale
+        {0, 0, DEG45}// rotation
+    , 1);
 
     engine.start();
     engine.loop();

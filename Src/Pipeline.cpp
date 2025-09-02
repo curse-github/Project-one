@@ -29,8 +29,8 @@ namespace Eng {
         shaderStages[1].pName = "main";
         shaderStages[1].pSpecializationInfo = nullptr;
 
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions = Model::Vertex::getBindingDescriptions();
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions = Model::Vertex::getAttributeDescriptions();
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions = Mesh::Vertex::getBindingDescriptions();
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions = Mesh::Vertex::getAttributeDescriptions();
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(attributeDescriptions.size());
@@ -113,7 +113,7 @@ namespace Eng {
         config.rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
         config.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
         config.rasterizationInfo.lineWidth = 1.0f;
-        config.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+        config.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;// VK_CULL_MODE_BACK_BIT;
         config.rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
         config.rasterizationInfo.depthBiasEnable = VK_FALSE;
         config.rasterizationInfo.depthBiasConstantFactor = 0.0f; // Optional, since it is just set to 0;

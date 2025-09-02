@@ -2,7 +2,7 @@
 #define __GAMEOBJECT
 
 #include "Helpers.h"
-#include "Model.h"
+#include "Mesh.h"
 
 namespace Eng {
     using id_t = unsigned int;
@@ -10,7 +10,8 @@ namespace Eng {
         vec3 position{0.0f, 0.0f, 0.0f};
         vec3 scale{1.0f, 1.0f, 1.0f};
         vec3 rotation{0.0f, 0.0f, 0.0f};
-        mat4 getMat() const;
+        mat4 getTransformMat() const;
+        mat3 getNormalMat() const;
     };
     class GameObject {
         id_t id;
@@ -23,7 +24,7 @@ namespace Eng {
         GameObject& operator=(GameObject&& move) = default;
         ~GameObject();
 
-        Model* model;
+        Mesh* mesh;
         TransformComponent transform;
     };
 }

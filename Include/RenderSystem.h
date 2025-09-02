@@ -4,14 +4,14 @@
 #include "Helpers.h"
 #include "Device.h"
 #include "Pipeline.h"
-#include "Model.h"
+#include "Mesh.h"
 #include "GameObject.h"
 #include "Camera.h"
 
 namespace Eng {
     struct SimplePushConstantData {
-        glm::mat4 projection{1.0f};
         glm::mat4 transform{1.0f};
+        glm::mat4 normalMat{1.0f};
     };
     class SimpleRenderSystem {
         Device* device;

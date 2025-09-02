@@ -6,10 +6,11 @@
 #include "Device.h"
 #include "Pipeline.h"
 #include "Renderer.h"
-#include "Model.h"
+#include "Mesh.h"
 #include "GameObject.h"
 #include "RenderSystem.h"
 #include "Camera.h"
+#include "Loaders.h"
 
 namespace Eng {
     struct KeyMappings {
@@ -33,7 +34,7 @@ namespace Eng {
         float speed = 3.0f;
         float sensitivity = 1.5f;
 
-        Model* model;
+        std::vector<Mesh*> meshes;
         std::vector<GameObject> objects;
         
         bool started = false;
@@ -46,7 +47,7 @@ namespace Eng {
         Engine& operator=(Engine&& move) = delete;
         ~Engine();
 
-        void addObject(const vec3& position, const vec3& scale, const vec3& rotation);
+        void addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex);
         void start();
         void loop();
     };

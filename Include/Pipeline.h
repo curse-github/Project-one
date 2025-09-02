@@ -3,7 +3,7 @@
 
 #include "Helpers.h"
 #include "Device.h"
-#include "Model.h"
+#include "Mesh.h"
 
 // input assembler -> vertex shader -> rasterization -> fragment shader -> color blending
 namespace Eng {
