@@ -1,5 +1,5 @@
-#ifndef __GAMEOBJECT
-#define __GAMEOBJECT
+#ifndef ENG_GAMEOBJECT
+#define ENG_GAMEOBJECT
 
 #include "Helpers.h"
 #include "Mesh.h"

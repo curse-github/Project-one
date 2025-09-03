@@ -1,5 +1,5 @@
-#ifndef __HELPERS
-#define __HELPERS
+#ifndef ENG_HELPERS
+#define ENG_HELPERS
 // #define VSYNC
 
 #define DEG45 0.78539816339f
@@ -39,19 +39,51 @@ using glm::mat4;
 #include <cassert>
 #include <chrono>
 #include <unordered_map>
+#include <memory>
+#include "Camera.h"
 
 namespace Eng {
-    struct SwapChainSupportDetails {
-        VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
+    template<typename T>
+    struct OwnedPointer {
+        T* value;
+        OwnedPointer(T* _value = nullptr) : value(_value) {};
+        OwnedPointer(const OwnedPointer<T>& copy) = delete;
+        OwnedPointer& operator=(const OwnedPointer<T>& copy) = delete;
+        OwnedPointer(OwnedPointer<T>&& move) : value(move.value) {
+            move.value = nullptr;
+        };
+        OwnedPointer& operator=(OwnedPointer<T>&& move) {
+            value = move.value;
+            move.value = nullptr;
+            return *this;
+        }
+        ~OwnedPointer() { if (value != nullptr) delete value; };
+        OwnedPointer& operator=(T* _value) {
+            if (value != nullptr) delete value;
+            value = _value;
+            return *this;
+        };
+        T* operator->() { return value; }
+        const T* operator->() const { return value; }
     };
-    struct QueueFamilyIndices {
-        unsigned int graphicsFamily;
-        unsigned int presentFamily;
-        bool graphicsFamilyHasValue = false;
-        bool presentFamilyHasValue = false;
-        bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
+    struct FrameInfo {
+        unsigned int index;
+        float dt;
+        VkCommandBuffer commandBuffer;
+        Camera* camera;
+        VkDescriptorSet globalDescriptorSet;
+    };
+    struct KeyMappings {
+        int moveLeft = GLFW_KEY_A;
+        int moveRight = GLFW_KEY_D;
+        int moveForward = GLFW_KEY_W;
+        int moveBackward = GLFW_KEY_S;
+        int moveUp = GLFW_KEY_SPACE;
+        int moveDown = GLFW_KEY_LEFT_SHIFT;
+        int lookLeft = GLFW_KEY_LEFT;
+        int lookRight = GLFW_KEY_RIGHT;
+        int lookUp = GLFW_KEY_UP;
+        int lookDown = GLFW_KEY_DOWN;
     };
 }
 

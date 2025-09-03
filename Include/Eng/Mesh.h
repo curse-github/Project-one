@@ -1,17 +1,16 @@
-#ifndef __MESH
-#define __MESH
+#ifndef ENG_MESH
+#define ENG_MESH
 
 #include "Helpers.h"
 #include "Device.h"
+#include "Buffer.h"
 
 namespace Eng {
     class Mesh {
         Device* device;
-        VkBuffer vertexBuffer;
-        VkDeviceMemory vertexBufferMemory;
+        Buffer* vertexBuffer;
         unsigned int vertexCount;
-        VkBuffer indexBuffer;
-        VkDeviceMemory indexBufferMemory;
+        Buffer* indexBuffer;
         unsigned int indexCount;
         bool hasIndexBuffer = false;
     public:
@@ -19,10 +18,9 @@ namespace Eng {
             vec3 position{};
             vec2 uv{};
             vec3 normal{};
-            vec3 color{};
 
             bool operator==(const Vertex &other) const {
-                return (position == other.position) && (uv == other.uv) && (normal == other.normal) && (color == other.color);
+                return (position == other.position) && (uv == other.uv) && (normal == other.normal);
             }
             
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();

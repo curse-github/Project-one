@@ -1,5 +1,5 @@
-#ifndef __ENGINE
-#define __ENGINE
+#ifndef ENG_ENGINE
+#define ENG_ENGINE
 
 #include "Helpers.h"
 #include "Window.h"
@@ -9,31 +9,21 @@
 #include "Mesh.h"
 #include "GameObject.h"
 #include "RenderSystem.h"
-#include "Camera.h"
 #include "Loaders.h"
+#include "Buffer.h"
+#include "Descriptors.h"
 
 namespace Eng {
-    struct KeyMappings {
-        int moveLeft = GLFW_KEY_A;
-        int moveRight = GLFW_KEY_D;
-        int moveForward = GLFW_KEY_W;
-        int moveBackward = GLFW_KEY_S;
-        int moveUp = GLFW_KEY_SPACE;
-        int moveDown = GLFW_KEY_LEFT_SHIFT;
-        int lookLeft = GLFW_KEY_LEFT;
-        int lookRight = GLFW_KEY_RIGHT;
-        int lookUp = GLFW_KEY_UP;
-        int lookDown = GLFW_KEY_DOWN;
-    };
     class Engine {
-        Window window;
-        Device device;
-        Renderer renderer;
-        
         KeyMappings keys{};
         float speed = 3.0f;
         float sensitivity = 1.5f;
 
+        Window window;
+        Device device;
+        Renderer renderer;
+        
+        DescriptorPool* globalPool;
         std::vector<Mesh*> meshes;
         std::vector<GameObject> objects;
         

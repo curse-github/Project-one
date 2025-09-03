@@ -8,10 +8,12 @@ endif
 CONST_ARGS += -D_DEBUG=0
 
 SPV_BUILD = $(VULKAN_SDK)/Bin/glslc -o
-O_BUILD = g++ -O3 -march=native -funroll-loops -flto -I./Include -I./Lib/Include -I$(VULKAN_SDK)/Include $(CONST_ARGS) -o
+O_BUILD = g++ -O3 -march=native -funroll-loops -flto -I./Include -I./Include/Eng -I./Lib/Include -I$(VULKAN_SDK)/Include $(CONST_ARGS) -o
 EXE_BUILD = g++ -O3 -march=native -funroll-loops -flto -L$(LIB_DIR) -L$(VULKAN_SDK)/Lib -o
 
-Files = app Window Engine Device Pipeline Swapchain Mesh Renderer RenderSystem GameObject Camera Loaders Helpers
+Files = app Engine GameObject Camera Loaders Helpers
+EngineFiles = Eng/Window Eng/Pipeline Eng/Swapchain Eng/Renderer Eng/RenderSystem Eng/Mesh Eng/Buffer Eng/Descriptors Eng/Device
+allFiles = $(Files) $(EngineFiles)
 Shaders = simpleVert.vert simpleFrag.frag
 
 ./out/%.o: makefolders ./Include/%.h | ./Src/%.cpp
@@ -22,14 +24,16 @@ Shaders = simpleVert.vert simpleFrag.frag
 makefolders:
 	@-mkdir out
 ifeq ($(OS),Windows_NT)
+	@-mkdir out\Eng
 	@-mkdir out\shaders
 else
+	@-mkdir out/Eng
 	@-mkdir out/shaders
 endif
 shaders: $(Shaders:%=./out/shaders/%.spv)
-./out/app.exe: makefolders shaders | $(Files:%=./out/%.o)
+./out/app.exe: makefolders shaders | $(allFiles:%=./out/%.o)
 	@$(EXE_BUILD) $@ $| -lglfw3 -lvulkan -lgdi32
-./out/app.out: makefolders shaders | $(Files:%=./out/%.o)
+./out/app.out: makefolders shaders | $(allFiles:%=./out/%.o)
 	@$(EXE_BUILD) $@ $| -lglfw3 -lvulkan
 clean:
 ifeq ($(OS),Windows_NT)

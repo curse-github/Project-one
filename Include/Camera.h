@@ -1,7 +1,14 @@
-#ifndef __CAMERA
-#define __CAMERA
+#ifndef ENG_CAMERA
+#define ENG_CAMERA
 
-#include "Helpers.h"
+#include <glm/vec3.hpp>
+using glm::vec3;
+#include <glm/vec4.hpp>
+using glm::vec4;
+#include <glm/mat4x4.hpp>
+using glm::mat4;
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
 
 namespace Eng {
     class Camera {
@@ -25,4 +32,4 @@ namespace Eng {
     };
 }
 
-#endif// __CAMERA
+#endif// ENG_CAMERA

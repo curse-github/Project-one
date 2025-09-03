@@ -5,7 +5,7 @@ namespace std {
     struct hash<Eng::Mesh::Vertex> {
         size_t operator()(Eng::Mesh::Vertex const& vertex) const {
             size_t seed = 0;
-            hashCombine(seed, vertex.position, vertex.uv, vertex.normal, vertex.color);
+            hashCombine(seed, vertex.position, vertex.uv, vertex.normal);
             return seed;
         }
     };
@@ -59,14 +59,13 @@ namespace Eng {
                     if (floats.size() == 3) {
                         if (hasColors) throw std::runtime_error("invalid wav file: only some vertices have colors.");
                         positions.push_back(vec3(floats[0], floats[1], floats[2]));
-                        positions.push_back(vec3(0.8f, 0.8f, 0.8f));
                     } else if (floats.size() == 6) {
                         if (!hasColors) {
                             if (positions.size() != 0) throw std::runtime_error("invalid wav file: only some vertices have colors.");
                             else hasColors = true;
                         }
                         positions.push_back(vec3(floats[0], floats[1], floats[2]));
-                        positions.push_back(vec3(floats[3], floats[4], floats[5]));
+                        // positions.push_back(vec3(floats[3], floats[4], floats[5]));// positions contain colors
                     } else throw std::runtime_error("invalid wav file: incorrect number of numbers in vertex position.");
                 } else if (line[1] == 't') {
                     // parse numbers
@@ -119,62 +118,53 @@ namespace Eng {
                     ++numTris;
 #endif
                     pushVertex({
-                        positions[ints[0]*2],
+                        positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
-                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
-                        positions[ints[0]*2+1]
+                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]]
                     }, data);
                     pushVertex({
-                        positions[ints[3]*2],
+                        positions[ints[3]],
                         (ints[4]==-1)?vec2(0.0f, 0.0f):uvs[ints[4]],
-                        (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]],
-                        positions[ints[3]*2+1]
+                        (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]]
                     }, data);
                     pushVertex({
-                        positions[ints[6]*2],
+                        positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
-                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
-                        positions[ints[6]*2+1]
+                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]]
                     }, data);
                 } else if (ints.size() == 12) {
 #if defined(_DEBUG) && (_DEBUG==1)
                     numTris += 2;
 #endif
                     pushVertex({
-                        positions[ints[0]*2],
+                        positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
-                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
-                        positions[ints[0]*2+1]
+                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]]
                     }, data);
                     pushVertex({
-                        positions[ints[3]*2],
+                        positions[ints[3]],
                         (ints[4]==-1)?vec2(0.0f, 0.0f):uvs[ints[4]],
-                        (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]],
-                        positions[ints[3]*2+1]
+                        (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]]
                     }, data);
                     pushVertex({
-                        positions[ints[6]*2],
+                        positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
-                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
-                        positions[ints[6]*2+1]
+                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]]
                     }, data);
                     pushVertex({
-                        positions[ints[9]*2],
+                        positions[ints[9]],
                         (ints[10]==-1)?vec2(0.0f, 0.0f):uvs[ints[10]],
-                        (ints[11]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[11]],
-                        positions[ints[9]*2+1]
+                        (ints[11]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[11]]
                     }, data);
                     pushVertex({
-                        positions[ints[0]*2],
+                        positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
-                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
-                        positions[ints[0]*2+1]
+                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]]
                     }, data);
                     pushVertex({
-                        positions[ints[6]*2],
+                        positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
-                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
-                        positions[ints[6]*2+1]
+                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]]
                     }, data);
                 } else throw std::runtime_error("invalid wav file: invalid face definition");
                 ints.clear();

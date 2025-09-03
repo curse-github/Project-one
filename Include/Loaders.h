@@ -1,5 +1,5 @@
-#ifndef __LOADER
-#define __LOADER
+#ifndef ENG_LOADER
+#define ENG_LOADER
 
 #include "Helpers.h"
 #include "Mesh.h"
@@ -10,4 +10,4 @@ namespace Eng {
     }
 }
 
-#endif// __LAODER
+#endif// ENG_LAODER

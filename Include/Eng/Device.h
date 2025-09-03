@@ -1,5 +1,5 @@
-#ifndef __DEVICE
-#define __DEVICE
+#ifndef ENG_DEVICE
+#define ENG_DEVICE
 
 #if defined(_DEBUG) && (_DEBUG==1) && defined(_WINDOWS)
 #define VALIDATION_LAYERS
@@ -10,10 +10,20 @@
 
 namespace Eng {
     // https://drive.google.com/drive/folders/1Hs-3v_AFVbASmymY4I2UB-JWvW3-hTAV
+    struct SwapChainSupportDetails {
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
+    };
+    struct QueueFamilyIndices {
+        unsigned int graphicsFamily;
+        unsigned int presentFamily;
+        bool graphicsFamilyHasValue = false;
+        bool presentFamilyHasValue = false;
+        bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
+    };
     class Device {
         Window* window;
-        // vulkan things
-        VkPhysicalDeviceProperties properties;
         const std::vector<const char* > validationLayers = {"VK_LAYER_KHRONOS_validation"};
         const std::vector<const char* > deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 #if defined(_LINUX)
@@ -28,12 +38,13 @@ namespace Eng {
 #endif
     public:
         VkInstance instance;
-        VkSurfaceKHR surface;
-        VkDevice device;
-        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-        VkCommandPool commandPool;
         VkQueue graphicsQueue;
         VkQueue presentQueue;
+        VkDevice device;
+        VkSurfaceKHR surface;
+        VkCommandPool commandPool;
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        VkPhysicalDeviceProperties properties;
         Device(Window* _window);
         Device(const Device& copy) = delete;
         Device& operator=(const Device& copy) = delete;

@@ -1,5 +1,5 @@
-#ifndef __RENDERER
-#define __RENDERER
+#ifndef ENG_RENDERER
+#define ENG_RENDERER
 
 #include "Helpers.h"
 #include "Window.h"
@@ -29,6 +29,10 @@ namespace Eng {
         VkClearColorValue clearColor{0.0f, 0.0f, 0.0f, 1.0f};
         bool frameInProgress = false;
         bool renderPassInProgress = false;
+        unsigned int getFrame() {
+            assert(frameInProgress && "cannot not get frame when frame has not started");
+            return swapchain->currentFrame;
+        };
         VkCommandBuffer getCurrentCommandBuffer() {
             assert(frameInProgress && "cannot not get command buffer when frame has not started");
             return commandBuffers[swapchain->currentFrame];
@@ -45,4 +49,4 @@ namespace Eng {
     };
 }
 
-#endif// __RENDERER
+#endif// ENG_RENDERER

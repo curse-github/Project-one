@@ -1,5 +1,5 @@
-#ifndef __PIPELINE
-#define __PIPELINE
+#ifndef ENG_PIPELINE
+#define ENG_PIPELINE
 
 #include "Helpers.h"
 #include "Device.h"

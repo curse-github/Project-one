@@ -1,5 +1,5 @@
-#ifndef __WINDOW
-#define __WINDOW
+#ifndef ENG_WINDOW
+#define ENG_WINDOW
 
 #include "Helpers.h"
 

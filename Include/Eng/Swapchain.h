@@ -1,5 +1,5 @@
-#ifndef __SWAPCHAIN
-#define __SWAPCHAIN
+#ifndef ENG_SWAPCHAIN
+#define ENG_SWAPCHAIN
 
 #include "Helpers.h"
 #include "Device.h"
