@@ -12,6 +12,7 @@
 #include "Loaders.h"
 #include "Buffer.h"
 #include "Descriptors.h"
+#include "FrameInfo.h"
 
 namespace Eng {
     class Engine {
@@ -25,7 +26,7 @@ namespace Eng {
         
         DescriptorPool* globalPool;
         std::vector<Mesh*> meshes;
-        std::vector<GameObject> objects;
+        GameObject::Map objects;
         
         bool started = false;
         bool pollMovement(const float& dt, TransformComponent& transform);
@@ -39,7 +40,8 @@ namespace Eng {
 
         void addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex);
         void start();
-        void loop();
+        void run();
+        void update(FrameInfo& frameInfo);
     };
 }
 

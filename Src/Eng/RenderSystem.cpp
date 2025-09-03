@@ -35,12 +35,13 @@ namespace Eng {
         delete pipeline;
         vkDestroyPipelineLayout(device->device, pipelineLayout, nullptr);
     }
-    void SimpleRenderSystem::recordObjects(FrameInfo& frameInfo, std::vector<GameObject>& objects) {
+    void SimpleRenderSystem::recordObjects(FrameInfo& frameInfo) {
         pipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
 
-        for (GameObject& object : objects) {
+        for (std::pair<const GameObject::id_t, GameObject>& kv : *frameInfo.objects) {
+            GameObject& object = kv.second;
             SimplePushConstantData push{object.transform.getTransformMat(), object.transform.getNormalMat()};
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
             object.mesh->bind(frameInfo.commandBuffer);

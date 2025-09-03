@@ -66,13 +66,6 @@ namespace Eng {
         T* operator->() { return value; }
         const T* operator->() const { return value; }
     };
-    struct FrameInfo {
-        unsigned int index;
-        float dt;
-        VkCommandBuffer commandBuffer;
-        Camera* camera;
-        VkDescriptorSet globalDescriptorSet;
-    };
     struct KeyMappings {
         int moveLeft = GLFW_KEY_A;
         int moveRight = GLFW_KEY_D;

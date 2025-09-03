@@ -5,7 +5,6 @@
 #include "Mesh.h"
 
 namespace Eng {
-    using id_t = unsigned int;
     struct TransformComponent {
         vec3 position{0.0f, 0.0f, 0.0f};
         vec3 scale{1.0f, 1.0f, 1.0f};
@@ -14,9 +13,9 @@ namespace Eng {
         mat3 getNormalMat() const;
     };
     class GameObject {
-        id_t id;
-        GameObject(id_t _id);
     public:
+        using id_t = unsigned int;
+        using Map = std::unordered_map<id_t, GameObject>;
         static GameObject createGameObject();
         GameObject(const GameObject& copy) = delete;
         GameObject& operator=(const GameObject& copy) = delete;
@@ -24,8 +23,11 @@ namespace Eng {
         GameObject& operator=(GameObject&& move) = default;
         ~GameObject();
 
+        id_t id;
         Mesh* mesh;
         TransformComponent transform;
+    private:
+        GameObject(id_t _id);
     };
 }
 

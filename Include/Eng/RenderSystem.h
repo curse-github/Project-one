@@ -6,6 +6,7 @@
 #include "Pipeline.h"
 #include "Mesh.h"
 #include "GameObject.h"
+#include "FrameInfo.h"
 
 namespace Eng {
     struct SimplePushConstantData {
@@ -26,7 +27,7 @@ namespace Eng {
         SimpleRenderSystem& operator=(SimpleRenderSystem&& move) = delete;
         ~SimpleRenderSystem();
         
-        void recordObjects(FrameInfo& frameInfo, std::vector<GameObject>& objects);
+        void recordObjects(FrameInfo& frameInfo);
     };
 }
 

@@ -32,7 +32,7 @@ namespace Eng {
     GameObject::GameObject(id_t _id) : id(_id) {
 
     }
-    id_t currentId = 0;
+    GameObject::id_t currentId = 0;
     GameObject GameObject::createGameObject() {
         return GameObject(currentId++);
     }
