@@ -11,6 +11,18 @@ namespace Eng {
         vec3 rotation{0.0f, 0.0f, 0.0f};
         mat4 getTransformMat() const;
         mat3 getNormalMat() const;
+        TransformComponent() {};
+        TransformComponent(const TransformComponent& copy) : position(copy.position), scale(copy.scale), rotation(copy.rotation) { }
+        TransformComponent& operator=(const TransformComponent& copy) {
+            position = copy.position;
+            scale = copy.scale;
+            rotation = copy.rotation;
+            return *this;
+        }
+    };
+    struct PointLightComponent {
+        vec4 colorIntensity{0.0f};
+        PointLightComponent(const vec4& _colorIntensity) : colorIntensity(_colorIntensity) { };
     };
     class GameObject {
     public:
@@ -19,13 +31,14 @@ namespace Eng {
         static GameObject createGameObject();
         GameObject(const GameObject& copy) = delete;
         GameObject& operator=(const GameObject& copy) = delete;
-        GameObject(GameObject&& move) = default;
-        GameObject& operator=(GameObject&& move) = default;
+        GameObject(GameObject&& move) : id(move.id), transform(move.transform), mesh(move.mesh), light(move.light) { move.light = nullptr; };
+        GameObject& operator=(GameObject&& move) = delete;
         ~GameObject();
 
         id_t id;
-        Mesh* mesh;
         TransformComponent transform;
+        Mesh* mesh;
+        PointLightComponent* light = nullptr;
     private:
         GameObject(id_t _id);
     };

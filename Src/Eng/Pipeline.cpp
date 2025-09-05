@@ -4,8 +4,8 @@ namespace Eng {
     Pipeline::Pipeline(Device* _device, const std::string& vert, const std::string& frag, const PipelineConfigInfo& config) : device(_device) {
         assert((config.pipelineLayout != VK_NULL_HANDLE) && "Cannot create graphics pipeline:: no pipelineLayout provided in config");
         assert((config.renderPass != VK_NULL_HANDLE) && "Cannot create graphics pipeline:: no renderPass provided in config");
-        static std::vector<char> vertCode = readFile(vert);
-        static std::vector<char> fragCode = readFile(frag);
+        std::vector<char> vertCode = readFile(vert);
+        std::vector<char> fragCode = readFile(frag);
 #if defined(_DEBUG) && (_DEBUG==1)
         std::cout << "vertCode length = " << vertCode.size() << '\n';
         std::cout << "fragCode length = " << fragCode.size() << '\n';
@@ -20,23 +20,37 @@ namespace Eng {
         shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
         shaderStages[0].module = vertShaderModule;
         shaderStages[0].pName = "main";
-        shaderStages[0].pSpecializationInfo = nullptr;
+        VkSpecializationInfo vertSpecializationInfo{};
+        vertSpecializationInfo.mapEntryCount = static_cast<unsigned int>(config.vertSpecializationInfoEntries.size());
+        if (vertSpecializationInfo.mapEntryCount > 0) {
+            vertSpecializationInfo.pMapEntries = config.vertSpecializationInfoEntries.data();
+            vertSpecializationInfo.dataSize = config.vertSpecializationInfoData.size();
+            vertSpecializationInfo.pData = config.vertSpecializationInfoData.data();
+            shaderStages[0].pSpecializationInfo = &vertSpecializationInfo;
+        } else
+            shaderStages[0].pSpecializationInfo = nullptr;
         shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStages[1].pNext = nullptr;
         shaderStages[1].flags = 0;
         shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
         shaderStages[1].module = fragShaderModule;
         shaderStages[1].pName = "main";
-        shaderStages[1].pSpecializationInfo = nullptr;
+        VkSpecializationInfo fragSpecializationInfo{};
+        fragSpecializationInfo.mapEntryCount = static_cast<unsigned int>(config.fragSpecializationInfoEntries.size());
+        if (fragSpecializationInfo.mapEntryCount > 0) {
+            fragSpecializationInfo.pMapEntries = config.fragSpecializationInfoEntries.data();
+            fragSpecializationInfo.dataSize = config.fragSpecializationInfoData.size();
+            fragSpecializationInfo.pData = config.fragSpecializationInfoData.data();
+            shaderStages[1].pSpecializationInfo = &fragSpecializationInfo;
+        } else
+            shaderStages[1].pSpecializationInfo = nullptr;
 
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions = Mesh::Vertex::getBindingDescriptions();
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions = Mesh::Vertex::getAttributeDescriptions();
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(attributeDescriptions.size());
-        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-        vertexInputInfo.vertexBindingDescriptionCount = static_cast<unsigned int>(bindingDescriptions.size());
-        vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<unsigned int>(config.attributeDescriptions.size());
+        vertexInputInfo.pVertexAttributeDescriptions = config.attributeDescriptions.data();
+        vertexInputInfo.vertexBindingDescriptionCount = static_cast<unsigned int>(config.bindingDescriptions.size());
+        vertexInputInfo.pVertexBindingDescriptions = config.bindingDescriptions.data();
         
         VkPipelineColorBlendStateCreateInfo colorBlendInfo{};
         colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -96,7 +110,13 @@ namespace Eng {
 
 
 
-    void Pipeline::createDefaultConfig(PipelineConfigInfo& config) {
+    void Pipeline::configSetDefaults(PipelineConfigInfo& config) {
+        // specialization info
+        unsigned int temp = MAX_LIGHTS;
+        config.vertSpecializationInfoEntries.push_back(VkSpecializationMapEntry{0, 0, sizeof(temp)});
+        config.vertSpecializationInfoData.insert(config.vertSpecializationInfoData.cend(), (char*)&temp, ((char*)&temp)+sizeof(temp));
+        config.fragSpecializationInfoEntries.push_back(VkSpecializationMapEntry{0, 0, sizeof(temp)});
+        config.fragSpecializationInfoData.insert(config.fragSpecializationInfoData.cend(), (char*)&temp, ((char*)&temp)+sizeof(temp));
         // viewportInfo
         config.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         config.viewportInfo.viewportCount = 1;
@@ -113,8 +133,8 @@ namespace Eng {
         config.rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
         config.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
         config.rasterizationInfo.lineWidth = 1.0f;
-        config.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;// VK_CULL_MODE_BACK_BIT;
-        config.rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        config.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+        config.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         config.rasterizationInfo.depthBiasEnable = VK_FALSE;
         config.rasterizationInfo.depthBiasConstantFactor = 0.0f; // Optional, since it is just set to 0;
         config.rasterizationInfo.depthBiasClamp = 0.0f;          // Optional, since it is just set to 0;
@@ -154,5 +174,17 @@ namespace Eng {
         config.dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         config.dynamicStateInfo.pDynamicStates = config.dynamicStateEnables.data();
         config.dynamicStateInfo.dynamicStateCount = static_cast<unsigned int>(config.dynamicStateEnables.size());
+    }
+    void Pipeline::configEnableAlphaBlending(PipelineConfigInfo& config) {
+        config.colorBlendAttachment.colorWriteMask =
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        config.colorBlendAttachment.blendEnable = VK_TRUE;
+        config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional, since we dont check alpha values
+        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional, since we dont check alpha values
+        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional, since we dont check alpha values
     }
 }

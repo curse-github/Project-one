@@ -59,5 +59,11 @@ namespace Eng {
             vec4(u.z, v.z, w.z, 0.0f),
             vec4(-glm::dot(u, position), -glm::dot(v, position), -glm::dot(w, position), 1.0f)
         );
+        inverseView = mat4(
+            vec4(u.x, u.y, u.z, 0.0f),
+            vec4(v.x, v.y, v.z, 0.0f),
+            vec4(w.x, w.y, w.z, 0.0f),
+            vec4(position.x, position.y, position.z, 1.0f)
+        );
     }
 }

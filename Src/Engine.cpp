@@ -1,12 +1,7 @@
 #include "Engine.h"
 
 namespace Eng {
-    struct GlobalUniformBufferObject {
-        mat4 projectionView{1.0f};
-        vec4 ambientLightColor{1.0f, 1.0f, 1.0f, 0.2f};
-        vec3 lightPosition{0.0f, -1.0f, 1.0f};
-        alignas(16) vec4 lightColor{1.0f, 0.0f, 1.0f, 1.0f};
-    } uniformBufferElement;
+    GlobalUniformBufferObject uniformBufferElement;
 
     Engine::Engine(const std::string& windowName, const ivec2& windowSize)
         : window(windowName, windowSize), device(&window), renderer(&window, &device)
@@ -15,25 +10,33 @@ namespace Eng {
             .setMaxSets(Swapchain::MAX_FRAMES_IN_FLIGHT)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT)
             .build();
-        meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/flat_vase.obj"));
-        meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/smooth_vase.obj"));
         meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/suzanne.obj"));
         meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/Quad.obj"));
     }
 
     Engine::~Engine() {
-        delete globalPool;
-        for (Mesh* mesh : meshes)
-            delete mesh;
     }
-    void Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex) {
-        if (started) return;
+    GameObject::id_t Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex) {
         GameObject object = GameObject::createGameObject();
-        object.mesh = meshes[meshIndex];
+        object.mesh = meshes[meshIndex].value;
         object.transform.position = position;
         object.transform.scale = scale;
         object.transform.rotation = rotation;
         objects.emplace(object.id, (GameObject&&)object);
+        return object.id;
+    }
+    GameObject::id_t Engine::addLight(const vec3& position, const float& size, const vec3& color, const float& intensity) {
+        assert((uniformBufferElement.numLights <= MAX_LIGHTS) && "Tried to add too many lights");
+        vec4 colorIntensity = vec4(color, intensity/3.0f);
+        vec4 positionSize = vec4(position, size);
+        // add light to lights map
+        GameObject light = GameObject::createGameObject();
+        light.transform.position = position;
+        light.transform.scale = vec3(size, 0.0f, 0.0f);
+        light.light = new PointLightComponent(colorIntensity);
+        lights.emplace(light.id, (GameObject&&)light);
+        uniformBufferElement.numLights++;
+        return light.id;
     }
     void Engine::start() {
         started = true;
@@ -84,13 +87,13 @@ namespace Eng {
         }
 
         // setup rendering
-        SimpleRenderSystem renderSystem(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout);
+        DiffuseBlinnPhongRenderSystem renderSystems(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout);
+        PointLightRenderSystem pointLightRenderSystem(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout);
         Camera camera;
-        TransformComponent cameraTransform;
-        cameraTransform.position.z = -2.5f;
-        camera.setViewYXZ(cameraTransform.position, cameraTransform.rotation);
-        FrameInfo frameInfo{ 0, 0, VK_NULL_HANDLE, &camera, VK_NULL_HANDLE, &objects };
-
+        TransformComponent viewerTransform;
+        viewerTransform.position.z = -2.5f;
+        camera.setViewYXZ(viewerTransform.position, viewerTransform.rotation);
+        FrameInfo frameInfo{ 0, 0.0f, 0.0f, VK_NULL_HANDLE, &camera, VK_NULL_HANDLE, &objects, &lights };
         std::chrono::_V2::system_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
         while(!window.shouldClose()) {
             glfwPollEvents();
@@ -99,23 +102,44 @@ namespace Eng {
             currentTime = newTime;
             // calc fps
             frames++;
-            if (std::chrono::duration<float, std::chrono::seconds::period>(currentTime-lastPrint).count() > 2) {
-                std::cout << "fps: " << (frames/2.0f) << '\n';
+            float diff = std::chrono::duration<float, std::chrono::seconds::period>(currentTime-lastPrint).count();
+            if (diff >= 2.0f) {
+                std::cout << "fps: " << (frames/diff) << '\n';
                 frames=0; lastPrint = currentTime;
             }
-            if (pollMovement(glm::min(dt, 1.0f/30.0f), cameraTransform)) camera.setViewYXZ(cameraTransform.position, cameraTransform.rotation);
-                camera.setProj(glm::radians(50.0f), renderer.getAspectRatio(), 0.1f, 100.0f);// camera.setOrtho(-aspect, aspect, 1, -1, -1, 1);
 
+            camera.setProj(glm::radians(50.0f), renderer.getAspectRatio(), 0.1f, 100.0f);// must be done since aspect ratio can change.
             frameInfo.commandBuffer = renderer.beginFrame();
             if (frameInfo.commandBuffer != VK_NULL_HANDLE) {
+                // set frame specific info
                 frameInfo.frameIndex = renderer.getFrame();
+                frameInfo.t += dt;
                 frameInfo.dt = dt;
                 frameInfo.globalDescriptorSet = globalDescriptorSets[frameInfo.frameIndex];
+                if (pollMovement(glm::min(dt, 1.0f/30.0f), viewerTransform))
+                    camera.setViewYXZ(viewerTransform.position, viewerTransform.rotation);
+                // let user update things
                 update(frameInfo);
+                // update uniform
+                unsigned int i = 0;
+                for (std::pair<const GameObject::id_t, GameObject>& kv : lights) {
+                    GameObject& light = kv.second;
+                    uniformBufferElement.pointLights[i].positionSize = vec4(light.transform.position, light.transform.scale.x);
+                    uniformBufferElement.pointLights[i].colorIntensity = light.light->colorIntensity;
+                    i++;
+                }
+                uniformBufferElement.numLights = i;
+                uniformBufferElement.projectionView = frameInfo.camera->projection * frameInfo.camera->view;
+                uniformBufferElement.inverseView = frameInfo.camera->inverseView;
                 uniformBuffers[frameInfo.frameIndex]->writeAtIndex(&uniformBufferElement, 0);
                 uniformBuffers[frameInfo.frameIndex]->flushAtIndex(0);
+                // start rendering
                 renderer.beginRenderPass(frameInfo.commandBuffer);
-                renderSystem.recordObjects(frameInfo);
+
+                // order!
+                renderSystems.recordObjects(frameInfo);
+                pointLightRenderSystem.recordObjects(frameInfo);
+
                 renderer.endRenderPass(frameInfo.commandBuffer);
                 renderer.endFrame();
             }
@@ -123,6 +147,17 @@ namespace Eng {
         vkDeviceWaitIdle(device.device);
     }
     void Engine::update(FrameInfo& frameInfo) {
-        uniformBufferElement.projectionView = frameInfo.camera->projection*frameInfo.camera->view;
+        int i = 0;
+        for (std::pair<const GameObject::id_t, GameObject>& kv : lights) {
+            GameObject& light = kv.second;
+            const vec3 base(0.0f, -0.5f, 0.0f);
+            const vec3 mult(1.5f, 0.1333f, -1.5f);
+            const float speedXZ = 1.25f;// revolutions per second
+            const float speedY = 2.0f;// revolutions per second
+            light.transform.position.x = base.x+mult.x*cos(DEG360/uniformBufferElement.numLights*i+glm::mod(frameInfo.t*speedXZ, DEG360));
+            light.transform.position.y = base.y+mult.y*sin(i+glm::mod(frameInfo.t*speedY, DEG360));
+            light.transform.position.z = base.z+mult.z*sin(DEG360/uniformBufferElement.numLights*i+glm::mod(frameInfo.t*speedXZ, DEG360));
+            i++;
+        }
     }
 }

@@ -250,12 +250,15 @@ namespace Eng {
     VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
         for (const VkSurfaceFormatKHR& availableFormat : availableFormats) {
             if (
-                    availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM
-                    && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+                    availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM// I only have variations of unorm, snorm, or srgb 
+                    && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR// the only color space i have avaliable
                 ) {
                 return availableFormat;
             }
         }
+#if defined(_DEBUG) && (_DEBUG==1)
+        std::cout << "Unable to get desired SurfaceFormat.\n";
+#endif
         return availableFormats[0];
     }
     VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {

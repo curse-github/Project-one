@@ -8,13 +8,14 @@
 #include "Renderer.h"
 #include "Mesh.h"
 #include "GameObject.h"
-#include "RenderSystem.h"
+#include "RenderSystems.h"
 #include "Loaders.h"
 #include "Buffer.h"
 #include "Descriptors.h"
 #include "FrameInfo.h"
 
 namespace Eng {
+
     class Engine {
         KeyMappings keys{};
         float speed = 3.0f;
@@ -24,9 +25,10 @@ namespace Eng {
         Device device;
         Renderer renderer;
         
-        DescriptorPool* globalPool;
-        std::vector<Mesh*> meshes;
+        OwnedPointer<DescriptorPool> globalPool;
+        std::vector<OwnedPointer<Mesh>> meshes;
         GameObject::Map objects;
+        GameObject::Map lights;
         
         bool started = false;
         bool pollMovement(const float& dt, TransformComponent& transform);
@@ -38,7 +40,9 @@ namespace Eng {
         Engine& operator=(Engine&& move) = delete;
         ~Engine();
 
-        void addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex);
+        GameObject::id_t addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex);
+        GameObject::id_t addLight(const vec3& position, const float& size, const vec3& color, const float& intensity);
+        
         void start();
         void run();
         void update(FrameInfo& frameInfo);

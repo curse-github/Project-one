@@ -3,16 +3,23 @@
 
 #include "Helpers.h"
 #include "Device.h"
-#include "Mesh.h"
+#include "FrameInfo.h"
 
 // input assembler -> vertex shader -> rasterization -> fragment shader -> color blending
 namespace Eng {
     struct PipelineConfigInfo {
+        PipelineConfigInfo() = default;
         PipelineConfigInfo(const PipelineConfigInfo& copy) = delete;
         PipelineConfigInfo& operator=(const PipelineConfigInfo& copy) = delete;
         PipelineConfigInfo(PipelineConfigInfo&& move) = delete;
         PipelineConfigInfo& operator=(PipelineConfigInfo&& move) = delete;
 
+        std::vector<VkSpecializationMapEntry> vertSpecializationInfoEntries{};
+        std::vector<unsigned char> vertSpecializationInfoData{};
+        std::vector<VkSpecializationMapEntry> fragSpecializationInfoEntries{};
+        std::vector<unsigned char> fragSpecializationInfoData{};
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
         VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
         VkPipelineRasterizationStateCreateInfo rasterizationInfo;
@@ -41,7 +48,8 @@ namespace Eng {
         void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
         void bind(VkCommandBuffer commandBuffer);
 
-        static void createDefaultConfig(PipelineConfigInfo& config);
+        static void configSetDefaults(PipelineConfigInfo& config);
+        static void configEnableAlphaBlending(PipelineConfigInfo& config);
     };
 }
 

@@ -40,6 +40,7 @@ using glm::mat4;
 #include <chrono>
 #include <unordered_map>
 #include <memory>
+#include <map>
 #include "Camera.h"
 
 namespace Eng {
@@ -65,6 +66,10 @@ namespace Eng {
         };
         T* operator->() { return value; }
         const T* operator->() const { return value; }
+        operator T*() { return value; }
+        operator const T*() const { return value; }
+        operator T&() { return *value; }
+        operator const T&() const { return *value; }
     };
     struct KeyMappings {
         int moveLeft = GLFW_KEY_A;

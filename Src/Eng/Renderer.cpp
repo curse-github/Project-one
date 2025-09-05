@@ -22,7 +22,7 @@ namespace Eng {
             swapchain = new Swapchain(device, VkExtent2D{static_cast<unsigned int>(window->size.x), static_cast<unsigned int>(window->size.y)}, oldSwapchain);
             delete oldSwapchain;
             if (!oldSwapchain->swapchainsCompatible(*swapchain))
-                // should at some point just recreate the pipeline/rendersystem
+                // should at some point just recreate the pipeline/rendersystems
                 throw std::runtime_error("swapchain image format has changed!");
         }
         // recreatePipeline();
