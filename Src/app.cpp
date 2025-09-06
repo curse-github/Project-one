@@ -5,27 +5,27 @@ int main(int argc, char** argv) {
         {-1.75f, -0.5f, 2.25f},// position
         {1.0f, 0.75f, 0.75f},// scale
         {0.0f, -DEG45, 0.0f}// rotation
-    , 0);
+    , "Resources/obj/suzanne.obj");
     engine.addObject(// monkey2
         {0.0f, -0.5f, 2.75f},// position
         {0.75f, 1.0f, 0.75f},// scale
         {0.0f, 0.0f, 0.0f}// rotation
-    , 0);
+    , "Resources/obj/suzanne.obj");
     engine.addObject(// monkey3
         {1.75f, -0.5f, 2.25f},// position
         {1.0f, 0.75f, 0.75f},// scale
         {0.0f, DEG45, 0.0f}// rotation
-    , 0);
+    , "Resources/obj/suzanne.obj");
     engine.addObject(// floor
         {0.0f, 0.5f, 1.5f},// position
         {3.0f, 3.0f, 3.0f},// scale
         {0.0f, 0.0f, 0.0f}// rotation
-    , 1);
+    , "Resources/obj/Quad.obj");
     engine.addObject(// floor
         {1.5f, 0.0f, 0.0f},// position
         {0.5f, 0.5f, 0.5f},// scale
         {DEG90, DEG45, 0.0f}// rotation
-    , 1);
+    , "Resources/obj/Quad.obj");
     
     const vec3 base(0.0f, -0.5f, 0.0f);
     const vec3 mult(1.5f, 0.1333f, -1.5f);

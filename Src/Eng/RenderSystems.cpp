@@ -40,7 +40,7 @@ namespace Eng {
     }
     void DiffuseBlinnPhongRenderSystem::recordObjects(FrameInfo& frameInfo) {
         pipeline->bind(frameInfo.commandBuffer);
-        vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+        vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalUboDescriptorSet, 0, nullptr);
         for (std::pair<const GameObject::id_t, GameObject>& kv : *frameInfo.objects) {
             GameObject& object = kv.second;
             DefaultPushConstantData push{object.transform.getTransformMat(), object.transform.getNormalMat()};
@@ -91,7 +91,7 @@ namespace Eng {
     sortedGameObjectIdsT sortedIds{};
     void PointLightRenderSystem::recordObjects(FrameInfo& frameInfo) {
         pipeline->bind(frameInfo.commandBuffer);
-        vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+        vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalUboDescriptorSet, 0, nullptr);
         vec3 cameraPos = frameInfo.camera->getPosition();
         sortedIds.clear();
         for (std::pair<const GameObject::id_t, GameObject>& kv : *frameInfo.lights) {

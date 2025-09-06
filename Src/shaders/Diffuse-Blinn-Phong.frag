@@ -11,8 +11,9 @@ vec3 toneMap(vec3 x) {
     return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
-layout (location = 0) in vec3 fragNormal;
-layout (location = 1) in vec3 fragWorldPosition;
+layout (location = 0) in vec2 fragUv;
+layout (location = 1) in vec3 fragNormal;
+layout (location = 2) in vec3 fragWorldPosition;
 
 layout (location = 0) out vec4 outColor;
 
@@ -28,8 +29,8 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
     uint numLights;
     Light lights[MAX_LIGHTS];
 } Gubo;
+layout(set = 0, binding = 1) uniform sampler2D texSampler;
 
-vec3 color = vec3(0.8, 0.8, 0.8);
 vec3 specularColor = vec3(1.0, 1.0, 1.0);
 
 void main() {
@@ -51,5 +52,6 @@ void main() {
         float S = (N/4.0+8)/25.1327412287;
         specularLightColor += lightColor*pow(clamp(blinnPhongTerm, 0, 1), N)*S;
     }
-    outColor = vec4(toneMap(diffuseLightColor*color + specularLightColor*specularColor), 1.0);
+    vec4 color = texture(texSampler, fragUv);
+    outColor = vec4(toneMap(diffuseLightColor*color.rgb + specularLightColor*specularColor), color.a);
 }

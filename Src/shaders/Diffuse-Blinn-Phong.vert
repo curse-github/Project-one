@@ -4,8 +4,9 @@ layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 uv;
 layout (location = 2) in vec3 normal;
 
-layout (location = 0) out vec3 vertNormal;
-layout (location = 1) out vec3 vertWorldPosition;
+layout (location = 0) out vec2 vertUv;
+layout (location = 1) out vec3 vertNormal;
+layout (location = 2) out vec3 vertWorldPosition;
 
 layout(push_constant) uniform Push {
     mat4 modelMat;
@@ -28,6 +29,7 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
 void main() {
     vec4 worldPosition = push.modelMat * vec4(position, 1.0);
     gl_Position = Gubo.projectionView * worldPosition;
+    vertUv = uv;
     vertNormal = mat3(push.normalMat) * normal;
     vertWorldPosition = worldPosition.xyz/worldPosition.w;// perspective divide
 }

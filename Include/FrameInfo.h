@@ -23,7 +23,7 @@ namespace Eng {
         float dt;
         VkCommandBuffer commandBuffer;
         Camera* camera;
-        VkDescriptorSet globalDescriptorSet;
+        VkDescriptorSet globalUboDescriptorSet;
         GameObject::Map* objects;
         GameObject::Map* lights;
     };

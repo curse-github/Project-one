@@ -54,10 +54,12 @@ namespace Eng {
         
         Eng::SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); };
         QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); };
-        void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+        void createBuffer(VkDeviceSize size, VkBufferUsageFlags bufferUsage, VkMemoryPropertyFlags memoryProperties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-        void copyBufferToImage(VkBuffer buffer, VkImage image, unsigned int width, unsigned int height, unsigned int layerCount);
-        void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+        void createImage(const unsigned int& width, const unsigned int& height, const VkFormat& format, VkImageUsageFlags imageUsage, VkMemoryPropertyFlags memoryProperties, VkImage& image, VkDeviceMemory& imageMemory);
+        void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags memoryProperties, VkImage& image, VkDeviceMemory& imageMemory);
+        void transitionImageLayout(VkImage image, const VkImageAspectFlags& aspect, const VkImageLayout& from, const VkImageLayout& to);
+        void copyBufferToImage(const VkBuffer& buffer, const VkImage& image, const VkImageAspectFlags& aspect, const unsigned int& width, const unsigned int& height);
         VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);// used in swapchain
     private:
 

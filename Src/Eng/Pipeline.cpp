@@ -176,7 +176,7 @@ namespace Eng {
         config.dynamicStateInfo.dynamicStateCount = static_cast<unsigned int>(config.dynamicStateEnables.size());
     }
     void Pipeline::configEnableAlphaBlending(PipelineConfigInfo& config) {
-        config.colorBlendAttachment.colorWriteMask =
+        /*config.colorBlendAttachment.colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         config.colorBlendAttachment.blendEnable = VK_TRUE;
@@ -185,6 +185,16 @@ namespace Eng {
         config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
         config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional, since we dont check alpha values
         config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional, since we dont check alpha values
-        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional, since we dont check alpha values
+        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional, since we dont check alpha values*/
+        config.colorBlendAttachment.colorWriteMask =
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        config.colorBlendAttachment.blendEnable = VK_TRUE;
+        config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
     }
 }

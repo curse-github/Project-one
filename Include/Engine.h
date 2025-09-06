@@ -13,6 +13,7 @@
 #include "Buffer.h"
 #include "Descriptors.h"
 #include "FrameInfo.h"
+#include "Texture.h"
 
 namespace Eng {
 
@@ -26,7 +27,8 @@ namespace Eng {
         Renderer renderer;
         
         OwnedPointer<DescriptorPool> globalPool;
-        std::vector<OwnedPointer<Mesh>> meshes;
+        std::unordered_map<std::string, OwnedPointer<Mesh>> meshes;
+        OwnedPointer<Texture> texture;
         GameObject::Map objects;
         GameObject::Map lights;
         
@@ -40,7 +42,7 @@ namespace Eng {
         Engine& operator=(Engine&& move) = delete;
         ~Engine();
 
-        GameObject::id_t addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex);
+        GameObject::id_t addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh);
         GameObject::id_t addLight(const vec3& position, const float& size, const vec3& color, const float& intensity);
         
         void start();

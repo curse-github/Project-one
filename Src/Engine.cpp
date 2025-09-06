@@ -9,16 +9,24 @@ namespace Eng {
         globalPool = DescriptorPool::Builder(&device)
             .setMaxSets(Swapchain::MAX_FRAMES_IN_FLIGHT)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Swapchain::MAX_FRAMES_IN_FLIGHT)
             .build();
-        meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/suzanne.obj"));
-        meshes.push_back(Loaders::meshFromObj(&device, "Resources/obj/Quad.obj"));
+        std::vector<char> pixels;
+        for (size_t i = 0; i < 100; i++) {
+            pixels.push_back(204);
+            pixels.push_back(204);
+            pixels.push_back(204);
+            pixels.push_back(255);
+        }
+        texture = new Texture(&device, 10, 10, pixels.data());
     }
 
     Engine::~Engine() {
     }
-    GameObject::id_t Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation, const unsigned int& meshIndex) {
+    GameObject::id_t Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh) {
+        if (meshes.count(mesh) == 0) meshes[mesh] = Loaders::meshFromObj(&device, mesh);
         GameObject object = GameObject::createGameObject();
-        object.mesh = meshes[meshIndex].value;
+        object.mesh = meshes[mesh].value;
         object.transform.position = position;
         object.transform.scale = scale;
         object.transform.rotation = rotation;
@@ -78,12 +86,17 @@ namespace Eng {
             uniformBuffers[i]->map();
         }
         // create uniform buffer descriptor set layouts
-        OwnedPointer<DescriptorSetLayout> globalDescriptorSetLayout = DescriptorSetLayout::Builder(&device).addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT).build();
+        OwnedPointer<DescriptorSetLayout> globalDescriptorSetLayout = DescriptorSetLayout::Builder(&device)
+        .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
+        .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT).build();
         // create uniform buffer descriptor sets
         std::vector<VkDescriptorSet> globalDescriptorSets(Swapchain::MAX_FRAMES_IN_FLIGHT);
         for (unsigned int i = 0; i < Swapchain::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferDescriptor = uniformBuffers[i]->descriptorInfo();
-            DescriptorWriter(globalDescriptorSetLayout.value, globalPool).writeBuffer(0, &bufferDescriptor).build(globalDescriptorSets[i]);
+            VkDescriptorImageInfo imageDescriptor = texture->descriptorInfo();
+            DescriptorWriter(globalDescriptorSetLayout.value, globalPool)
+                .writeBuffer(0, &bufferDescriptor)
+                .writeImage(1, &imageDescriptor).build(globalDescriptorSets[i]);
         }
 
         // setup rendering
@@ -115,7 +128,7 @@ namespace Eng {
                 frameInfo.frameIndex = renderer.getFrame();
                 frameInfo.t += dt;
                 frameInfo.dt = dt;
-                frameInfo.globalDescriptorSet = globalDescriptorSets[frameInfo.frameIndex];
+                frameInfo.globalUboDescriptorSet = globalDescriptorSets[frameInfo.frameIndex];
                 if (pollMovement(glm::min(dt, 1.0f/30.0f), viewerTransform))
                     camera.setViewYXZ(viewerTransform.position, viewerTransform.rotation);
                 // let user update things
