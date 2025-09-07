@@ -1,4 +1,5 @@
 #include "GameObject.h"
+#include "FrameInfo.h"
 
 namespace Eng {
     mat4 TransformComponent::getTransformMat() const {
@@ -29,8 +30,9 @@ namespace Eng {
         );
     }
 
-    GameObject::GameObject(id_t _id) : id(_id) {
+    GameObject::GameObject(const id_t& _id) : id(_id) {
     }
+    GameObject::GameObject(GameObject&& move) : id(move.id), transform(move.transform), mesh(move.mesh), light(move.light), material(move.material) { move.light = nullptr; }
     GameObject GameObject::createGameObject() {
         static GameObject::id_t currentId = 0;
         return GameObject(currentId++);

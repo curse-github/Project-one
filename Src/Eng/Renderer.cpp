@@ -23,7 +23,7 @@ namespace Eng {
             delete oldSwapchain;
             if (!oldSwapchain->swapchainsCompatible(*swapchain))
                 // should at some point just recreate the pipeline/rendersystems
-                throw std::runtime_error("swapchain image format has changed!");
+                throw std::runtime_error("Swapchain image format has changed!");
         }
         // recreatePipeline();
     }
@@ -41,7 +41,7 @@ namespace Eng {
         allocInfo.commandPool = device->commandPool;
         allocInfo.commandBufferCount = static_cast<unsigned int>(commandBuffers.size());
         if (vkAllocateCommandBuffers(device->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
-            throw std::runtime_error("failed to allocate command buffers!");
+            throw std::runtime_error("Failed to allocate command buffers!");
     }
     VkCommandBuffer Renderer::beginFrame() {
         assert(!frameInProgress && "Cant begin frame when it is has already started.");
@@ -51,13 +51,13 @@ namespace Eng {
         }
         frameInProgress = true;
         if ((result != VK_SUCCESS) && (result != VK_SUBOPTIMAL_KHR))
-            throw std::runtime_error("failed to aquire next swapchain image!");
+            throw std::runtime_error("Failed to aquire next swapchain image!");
         VkCommandBuffer commandBuffer = getCurrentCommandBuffer();
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         swapchain->waitForCommandBuffer();
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-            throw std::runtime_error("failed to begin recording command buffer!");
+            throw std::runtime_error("Failed to begin recording command buffer!");
         return commandBuffer;
     }
     void Renderer::beginRenderPass(VkCommandBuffer commandBuffer) {
@@ -101,13 +101,13 @@ namespace Eng {
         assert(frameInProgress && "Cant end frame when it is has not started.");
         VkCommandBuffer commandBuffer = getCurrentCommandBuffer();
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-            throw std::runtime_error("failed to record command buffer!");
+            throw std::runtime_error("Failed to record command buffer!");
         VkResult result = swapchain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
         if ((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR) || (window->frameBufferResized)) {
             window->frameBufferResized = false;
             recreateSwapchain();
         } else if (result != VK_SUCCESS)
-            throw std::runtime_error("failed to present next swapchain image!");
+            throw std::runtime_error("Failed to present next swapchain image!");
         frameInProgress = false;
     }
 };

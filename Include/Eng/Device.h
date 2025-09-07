@@ -25,7 +25,7 @@ namespace Eng {
     class Device {
         Window* window;
         const std::vector<const char* > validationLayers = {"VK_LAYER_KHRONOS_validation"};
-        const std::vector<const char* > deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+        const std::vector<const char* > deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME};
 #if defined(_LINUX)
         const std::vector<const char* > instanceExtensions = {};
 #else
@@ -56,8 +56,7 @@ namespace Eng {
         QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); };
         void createBuffer(VkDeviceSize size, VkBufferUsageFlags bufferUsage, VkMemoryPropertyFlags memoryProperties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-        void createImage(const unsigned int& width, const unsigned int& height, const VkFormat& format, VkImageUsageFlags imageUsage, VkMemoryPropertyFlags memoryProperties, VkImage& image, VkDeviceMemory& imageMemory);
-        void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags memoryProperties, VkImage& image, VkDeviceMemory& imageMemory);
+        void createImage(const unsigned int& width, const unsigned int& height, const VkFormat& format, const VkImageTiling& tiling, const VkImageUsageFlags& imageUsage, const VkMemoryPropertyFlags& memoryProperties, VkImage& image, VkDeviceMemory& imageMemory);
         void transitionImageLayout(VkImage image, const VkImageAspectFlags& aspect, const VkImageLayout& from, const VkImageLayout& to);
         void copyBufferToImage(const VkBuffer& buffer, const VkImage& image, const VkImageAspectFlags& aspect, const unsigned int& width, const unsigned int& height);
         VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);// used in swapchain

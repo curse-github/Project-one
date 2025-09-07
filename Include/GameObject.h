@@ -3,8 +3,10 @@
 
 #include "Helpers.h"
 #include "Mesh.h"
+#include "UboStructs.h"
 
 namespace Eng {
+    struct MaterialUboData;
     struct TransformComponent {
         vec3 position{0.0f, 0.0f, 0.0f};
         vec3 scale{1.0f, 1.0f, 1.0f};
@@ -31,7 +33,7 @@ namespace Eng {
         static GameObject createGameObject();
         GameObject(const GameObject& copy) = delete;
         GameObject& operator=(const GameObject& copy) = delete;
-        GameObject(GameObject&& move) : id(move.id), transform(move.transform), mesh(move.mesh), light(move.light) { move.light = nullptr; };
+        GameObject(GameObject&& move);
         GameObject& operator=(GameObject&& move) = delete;
         ~GameObject();
 
@@ -39,8 +41,9 @@ namespace Eng {
         TransformComponent transform;
         Mesh* mesh;
         PointLightComponent* light = nullptr;
+        MaterialUboData material;
     private:
-        GameObject(id_t _id);
+        GameObject(const id_t& _id);
     };
 }
 

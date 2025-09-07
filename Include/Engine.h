@@ -13,10 +13,10 @@
 #include "Buffer.h"
 #include "Descriptors.h"
 #include "FrameInfo.h"
+#include "UboStructs.h"
 #include "Texture.h"
 
 namespace Eng {
-
     class Engine {
         KeyMappings keys{};
         float speed = 3.0f;
@@ -26,9 +26,11 @@ namespace Eng {
         Device device;
         Renderer renderer;
         
-        OwnedPointer<DescriptorPool> globalPool;
+        OwnedPointer<DescriptorPool> globalDescriptorPool;
         std::unordered_map<std::string, OwnedPointer<Mesh>> meshes;
-        OwnedPointer<Texture> texture;
+        unsigned int maxTextures;
+        std::vector<OwnedPointer<Texture>> textures;
+        std::unordered_map<std::string, size_t> textureIndxs;
         GameObject::Map objects;
         GameObject::Map lights;
         
@@ -42,7 +44,7 @@ namespace Eng {
         Engine& operator=(Engine&& move) = delete;
         ~Engine();
 
-        GameObject::id_t addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh);
+        GameObject::id_t addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh, const std::string& texture, const vec3& specColor, const float& specExp);
         GameObject::id_t addLight(const vec3& position, const float& size, const vec3& color, const float& intensity);
         
         void start();

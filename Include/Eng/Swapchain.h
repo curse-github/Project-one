@@ -3,6 +3,7 @@
 
 #include "Helpers.h"
 #include "Device.h"
+#include "Texture.h"
 
 namespace Eng {
     // https://drive.google.com/drive/folders/1X0wUwujKw8OH2Z18OENadX0XBKWfU50w
@@ -12,16 +13,14 @@ namespace Eng {
         VkSwapchainKHR swapChain;
         Swapchain* oldSwapchain;
     public:
-        std::vector<VkImage> depthImages;
-        std::vector<VkDeviceMemory> depthImageMemorys;
-        std::vector<VkImageView> depthImageViews;
         std::vector<VkImage> swapChainImages;
+        std::vector<VkImageView> swapChainImageViews;
+        std::vector<Texture*> depthTextures;
         unsigned int currentFrame = 0;
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
         std::vector<VkFramebuffer> swapChainFramebuffers;
         VkRenderPass renderPass;
-        std::vector<VkImageView> swapChainImageViews;
         VkExtent2D swapChainExtent;
 
         Swapchain(Device* _device, VkExtent2D extent);

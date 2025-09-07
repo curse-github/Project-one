@@ -1,35 +1,43 @@
 #include "Engine.h"
 
 namespace Eng {
-    GlobalUniformBufferObject uniformBufferElement;
+    GlobalUboData uniformBufferElement;
 
     Engine::Engine(const std::string& windowName, const ivec2& windowSize)
         : window(windowName, windowSize), device(&window), renderer(&window, &device)
-    {   
-        globalPool = DescriptorPool::Builder(&device)
-            .setMaxSets(Swapchain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Swapchain::MAX_FRAMES_IN_FLIGHT)
+    {
+        maxTextures = std::min(256u, device.properties.limits.maxDescriptorSetSampledImages);
+#if defined(_DEBUG) && (_DEBUG == 1)
+        std::cout << "maxTextures: " << maxTextures << '\n';
+#endif
+        globalDescriptorPool = DescriptorPool::Builder(&device)
+            .setMaxSets(Swapchain::MAX_FRAMES_IN_FLIGHT+2)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT+1)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, maxTextures)
             .build();
-        std::vector<char> pixels;
-        for (size_t i = 0; i < 100; i++) {
-            pixels.push_back(204);
-            pixels.push_back(204);
-            pixels.push_back(204);
-            pixels.push_back(255);
-        }
-        texture = new Texture(&device, 10, 10, pixels.data());
+            
+        textureIndxs[""] = 0u;
+        textures.push_back(Loaders::TextureLoader::fromBmp(&device, "Resources/Textures/White.bmp"));
     }
-
     Engine::~Engine() {
     }
-    GameObject::id_t Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh) {
-        if (meshes.count(mesh) == 0) meshes[mesh] = Loaders::meshFromObj(&device, mesh);
+    GameObject::id_t Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh,
+        const std::string& texture, const vec3& specColor, const float& specExp) {
+        if (meshes.count(mesh) == 0) meshes[mesh] = Loaders::MeshLoader::fromObj(&device, mesh);
+        if (textureIndxs.count(texture) == 0) {
+            if (textures.size() == maxTextures)
+                throw std::runtime_error("Tried to load too many textures!");
+            textureIndxs[texture] = textures.size();
+            textures.push_back(Loaders::TextureLoader::fromBmp(&device, texture));
+        }
         GameObject object = GameObject::createGameObject();
         object.mesh = meshes[mesh].value;
         object.transform.position = position;
         object.transform.scale = scale;
         object.transform.rotation = rotation;
+        object.material.texIdx = textureIndxs[texture];
+        object.material.spec = vec4(specColor, specExp);
         objects.emplace(object.id, (GameObject&&)object);
         return object.id;
     }
@@ -82,31 +90,37 @@ namespace Eng {
         // create uniform buffers
         std::vector<OwnedPointer<Buffer>> uniformBuffers;
         for (unsigned int i = 0; i < Swapchain::MAX_FRAMES_IN_FLIGHT; i++) {
-            uniformBuffers.emplace_back(new Buffer(&device, sizeof(GlobalUniformBufferObject), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device.properties.limits.minUniformBufferOffsetAlignment));
+            uniformBuffers.emplace_back(new Buffer(&device, sizeof(GlobalUboData), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device.properties.limits.minUniformBufferOffsetAlignment));
             uniformBuffers[i]->map();
         }
         // create uniform buffer descriptor set layouts
         OwnedPointer<DescriptorSetLayout> globalDescriptorSetLayout = DescriptorSetLayout::Builder(&device)
-        .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT)
-        .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT).build();
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT).build();
+        OwnedPointer<DescriptorSetLayout> textureDescriptorSetLayout = DescriptorSetLayout::Builder(&device)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, textures.size()).build();
         // create uniform buffer descriptor sets
         std::vector<VkDescriptorSet> globalDescriptorSets(Swapchain::MAX_FRAMES_IN_FLIGHT);
-        for (unsigned int i = 0; i < Swapchain::MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorSet textureDescriptorSet;
+        // populate uniform buffer descriptor sets with descriptors
+        for (int i = 0; i < Swapchain::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferDescriptor = uniformBuffers[i]->descriptorInfo();
-            VkDescriptorImageInfo imageDescriptor = texture->descriptorInfo();
-            DescriptorWriter(globalDescriptorSetLayout.value, globalPool)
-                .writeBuffer(0, &bufferDescriptor)
-                .writeImage(1, &imageDescriptor).build(globalDescriptorSets[i]);
+            if (!DescriptorWriter(globalDescriptorSetLayout.value, globalDescriptorPool).writeBuffer(0, &bufferDescriptor).build(globalDescriptorSets[i]))
+                std::cout << "building ubo descriptor set failed.\n";
         }
-
+        std::vector<VkDescriptorImageInfo> textureDescriptors(textures.size());
+        for (size_t i = 0; i < textures.size(); i++) textureDescriptors[i] = textures[i]->descriptorInfo();
+        if (!DescriptorWriter(textureDescriptorSetLayout.value, globalDescriptorPool)
+            .writeImages(0, textureDescriptors.data(), textureDescriptors.size()).build(textureDescriptorSet))
+                std::cout << "building texture descriptor set failed.\n";
+        
         // setup rendering
-        DiffuseBlinnPhongRenderSystem renderSystems(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout);
+        DiffuseBlinnPhongRenderSystem renderSystems(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout, textureDescriptorSetLayout->descriptorSetLayout, textures.size(), globalDescriptorPool);
         PointLightRenderSystem pointLightRenderSystem(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout);
         Camera camera;
         TransformComponent viewerTransform;
         viewerTransform.position.z = -2.5f;
         camera.setViewYXZ(viewerTransform.position, viewerTransform.rotation);
-        FrameInfo frameInfo{ 0, 0.0f, 0.0f, VK_NULL_HANDLE, &camera, VK_NULL_HANDLE, &objects, &lights };
+        FrameInfo frameInfo{ 0, 0.0f, 0.0f, VK_NULL_HANDLE, &camera, VK_NULL_HANDLE, textureDescriptorSet, &objects, &lights };
         std::chrono::_V2::system_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
         while(!window.shouldClose()) {
             glfwPollEvents();
@@ -128,7 +142,8 @@ namespace Eng {
                 frameInfo.frameIndex = renderer.getFrame();
                 frameInfo.t += dt;
                 frameInfo.dt = dt;
-                frameInfo.globalUboDescriptorSet = globalDescriptorSets[frameInfo.frameIndex];
+                frameInfo.globalDescriptorSet = globalDescriptorSets[frameInfo.frameIndex];
+                frameInfo.textureDescriptorSet = textureDescriptorSet;
                 if (pollMovement(glm::min(dt, 1.0f/30.0f), viewerTransform))
                     camera.setViewYXZ(viewerTransform.position, viewerTransform.rotation);
                 // let user update things

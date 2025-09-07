@@ -41,6 +41,7 @@ using glm::mat4;
 #include <unordered_map>
 #include <memory>
 #include <map>
+#include <algorithm>
 #include "Camera.h"
 
 namespace Eng {
@@ -86,6 +87,7 @@ namespace Eng {
 }
 
 std::vector<char> readFile(const std::string& path);
+std::vector<unsigned char> readFileBytes(const std::string& path);
 // from: https://stackoverflow.com/a/57595105
 template <typename T, typename... Rest>
 void hashCombine(std::size_t& seed, const T& v, const Rest&... rest) {

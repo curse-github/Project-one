@@ -7,6 +7,8 @@
 #include "Mesh.h"
 #include "GameObject.h"
 #include "FrameInfo.h"
+#include "UboStructs.h"
+#include "Descriptors.h"
 
 namespace Eng {
     struct DefaultPushConstantData {
@@ -17,10 +19,14 @@ namespace Eng {
         Device* device;
         Pipeline* pipeline;
         VkPipelineLayout pipelineLayout;
+        OwnedPointer<DescriptorSetLayout> materialDescriptorSetLayout;
+        VkDescriptorSet materialDescriptorSet;
+        OwnedPointer<Buffer> materialUniformBuffer;
 
         void recordCommandBuffer(const int& imageIndex);
     public:
-        DiffuseBlinnPhongRenderSystem(Device* _device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescriptorSetLayout);
+        DiffuseBlinnPhongRenderSystem(Device* _device, VkRenderPass renderPass,
+            VkDescriptorSetLayout& globalDescriptorSetLayout, VkDescriptorSetLayout& textureDescriptorSetLayout, const unsigned int& numTextures, DescriptorPool* globalDescriptorPool);
         DiffuseBlinnPhongRenderSystem(const DiffuseBlinnPhongRenderSystem& copy) = delete;
         DiffuseBlinnPhongRenderSystem& operator=(const DiffuseBlinnPhongRenderSystem& copy) = delete;
         DiffuseBlinnPhongRenderSystem(DiffuseBlinnPhongRenderSystem&& move) = delete;
@@ -40,7 +46,7 @@ namespace Eng {
 
         void recordCommandBuffer(const int& imageIndex);
     public:
-        PointLightRenderSystem(Device* _device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescriptorSetLayout);
+        PointLightRenderSystem(Device* _device, VkRenderPass renderPass, VkDescriptorSetLayout& globalDescriptorSetLayout);
         PointLightRenderSystem(const PointLightRenderSystem& copy) = delete;
         PointLightRenderSystem& operator=(const PointLightRenderSystem& copy) = delete;
         PointLightRenderSystem(PointLightRenderSystem&& move) = delete;

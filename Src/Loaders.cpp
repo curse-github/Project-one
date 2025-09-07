@@ -12,19 +12,19 @@ namespace std {
 }
 namespace Eng {
     namespace Loaders {
-        std::vector<vec3> positions;
-        bool hasColors = false;
-        std::vector<vec2> uvs;
-        std::vector<vec3> normals;
-#if defined(_DEBUG) && (_DEBUG==1)
-        unsigned int numTris = 0;
-#endif
-        std::unordered_map<Mesh::Vertex, unsigned int> uniqueVertices{};
+        static std::vector<float> floats;
+        static std::vector<int> ints;
+        static std::string num = "";
 
-        std::vector<float> floats;
-        std::vector<int> ints;
-        std::string num = "";
-        void pushVertex(Mesh::Vertex&& _vertex, Mesh::MeshData& data) {
+#pragma region MeshLoader
+        static std::vector<vec3> positions;
+        static std::vector<vec2> uvs;
+        static std::vector<vec3> normals;
+        static std::unordered_map<Mesh::Vertex, unsigned int> uniqueVertices{};
+#if defined(_DEBUG) && (_DEBUG==1)
+        static unsigned int numTris = 0;
+#endif
+        void MeshLoader::pushVertex(Mesh::Vertex&& _vertex, Mesh::MeshData& data) {
             Mesh::Vertex vertex = _vertex;
             if (uniqueVertices.count(vertex) == 0) {
                 uniqueVertices[vertex] = static_cast<unsigned int>(data.vertices.size());
@@ -32,19 +32,19 @@ namespace Eng {
             }
             data.indices.push_back(uniqueVertices[vertex]);
         }
-        void processLine(const std::string& line, Mesh::MeshData& data) {
+        void MeshLoader::processLine(const std::string& line, Mesh::MeshData& data) {
             size_t llen = line.size();
-            if (line[0] == '#') {// comments
+            if (line[0] == '#')// comments
                 return;
-            } else if (line[0] == 'm') {// mtllib, material file
+            else if (line[0] == 'm') {// mtllib, material file
                 return;
             } else if (line[0] == 'u') {// usemtl, material to use
                 return;
-            } else if (line[0] == 'o') {// object name
+            } else if (line[0] == 'o')// object name
                 return;
-            } else if (line[0] == 'g') {// group name
+            else if (line[0] == 'g')// group name
                 return;
-            } else if (line[0] == 'v') {// vertex data
+            else if (line[0] == 'v') {// vertex data
                 if (line[1] == ' ') {
                     // parse numbers
                     floats.reserve(6);
@@ -52,21 +52,17 @@ namespace Eng {
                         if ((line[j] == '-') || (line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
                             num += line[j];
                         else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; }
-                        else throw std::runtime_error("invalid wav file: invalid character found in vertex position/color definition.");
+                        else throw std::runtime_error("Invalid wav file: invalid character found in vertex position/color definition.");
                     }
                     floats.push_back(std::stof(num)); num="";
                     // do things with floats
                     if (floats.size() == 3) {
-                        if (hasColors) throw std::runtime_error("invalid wav file: only some vertices have colors.");
                         positions.push_back(vec3(floats[0], floats[1], floats[2]));
+                        // positions.push_back(vec3(0.8f, 0.8f, 0.8f));// position did not contain colors
                     } else if (floats.size() == 6) {
-                        if (!hasColors) {
-                            if (positions.size() != 0) throw std::runtime_error("invalid wav file: only some vertices have colors.");
-                            else hasColors = true;
-                        }
                         positions.push_back(vec3(floats[0], floats[1], floats[2]));
-                        // positions.push_back(vec3(floats[3], floats[4], floats[5]));// positions contain colors
-                    } else throw std::runtime_error("invalid wav file: incorrect number of numbers in vertex position.");
+                        // positions.push_back(vec3(floats[3], floats[4], floats[5]));// position contained colors
+                    } else throw std::runtime_error("Invalid wav file: incorrect number of numbers in vertex position.");
                 } else if (line[1] == 't') {
                     // parse numbers
                     floats.reserve(2);
@@ -74,12 +70,12 @@ namespace Eng {
                         if ((line[j] == '-') || (line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
                             num += line[j];
                         else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; }
-                        else throw std::runtime_error("invalid wav file: invalid character found in vertex uv definition.");
+                        else throw std::runtime_error("Invalid wav file: invalid character found in vertex uv definition.");
                     }
                     floats.push_back(std::stof(num)); num="";
                     // do things with floats
                     if (floats.size() == 2) uvs.push_back(vec2(floats[0], floats[1]));
-                    else throw std::runtime_error("invalid wav file: incorrect number of numbers in vertex uv.");
+                    else throw std::runtime_error("Invalid wav file: incorrect number of numbers in vertex uv.");
                 } else if (line[1] == 'n') {
                     // parse numbers
                     floats.reserve(3);
@@ -87,12 +83,12 @@ namespace Eng {
                         if ((line[j] == '-') || (line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
                             num += line[j];
                         else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; }
-                        else throw std::runtime_error("invalid wav file: invalid character found in vertex normal definition.");
+                        else throw std::runtime_error("Invalid wav file: invalid character found in vertex normal definition.");
                     }
                     floats.push_back(std::stof(num)); num="";
                     // do things with numbers
                     if (floats.size() == 3) normals.push_back(vec3(floats[0], floats[1], floats[2]));
-                    else throw std::runtime_error("invalid wav file: incorrect number of numbers in vertex normal.");
+                    else throw std::runtime_error("Invalid wav file: incorrect number of numbers in vertex normal.");
                 }
                 floats.clear();
             } else if (line[0] == 's')// smooth shading on or off
@@ -107,7 +103,7 @@ namespace Eng {
                             ints.push_back(std::stoi(num)-1); num="";
                         } else ints.push_back(-1);
                     }
-                    else throw std::runtime_error("invalid wav file: invalid character found in face definition");
+                    else throw std::runtime_error("Invalid wav file: invalid character found in face definition");
                 }
                 if (num != "") {
                     ints.push_back(std::stoi(num)-1); num="";
@@ -166,11 +162,11 @@ namespace Eng {
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
                         (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]]
                     }, data);
-                } else throw std::runtime_error("invalid wav file: invalid face definition");
+                } else throw std::runtime_error("Invalid wav file: invalid face definition");
                 ints.clear();
             }
         }
-        Mesh* meshFromObj(Device* device, const std::string& filePath) {
+        Mesh* MeshLoader::fromObj(Device* device, const std::string& filePath) {
 #if defined(_DEBUG) && (_DEBUG==1)
             std::chrono::_V2::system_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 #endif
@@ -196,7 +192,6 @@ namespace Eng {
             std::cout << "    and " << numTris << " tris.\n";
 #endif
             positions.clear();
-            hasColors = false;
             uvs.clear();
             normals.clear();
 #if defined(_DEBUG) && (_DEBUG==1)
@@ -204,5 +199,76 @@ namespace Eng {
 #endif
             return new Mesh(device, data);
         }
+#pragma endregion MeshLoader
+
+#pragma region TextureLoader
+    Texture* TextureLoader::fromBmp(Device* device, const std::string& filePath) {
+            std::vector<unsigned char> file = readFileBytes(filePath);
+            const size_t flen = file.size();
+            size_t i = 0;
+            if ((file[0] != 'B') || (file[1] != 'M'))
+                throw std::runtime_error("File is not .bmp file!");
+            i = 2+4+4;// skip signature("BM"), file size, reserved bits
+            unsigned int dataOffset = file[i] | (file[i+1] << 8u) | (file[i+2] << 16u) | (file[i+3] << 24u); i += 4;
+            i += 4;// skip infoHeader size
+            int width = file[i] | (file[i+1] << 8u) | (file[i+2] << 16u) | (file[i+3] << 24u); i += 4;
+            int height = file[i] | (file[i+1] << 8u) | (file[i+2] << 16u) | (file[i+3] << 24u); i += 4;
+            unsigned int planes =  file[i] | (file[i+1] << 8u); i += 2;
+            if (planes != 1)
+                throw std::runtime_error("Invalid bmp file: invalid number of planes!");
+            unsigned int bpp = file[i] | (file[i+1] << 8u); i += 2;
+            if ((bpp != 4) && (bpp != 8) && (bpp != 24) && (bpp != 32))// rgb or rgba without palleting
+                throw std::runtime_error("Invalid bmp file: cannot currently handle palleted images.");
+            unsigned int compression = file[i] | (file[i+1] << 8u) | (file[i+2] << 16u) | (file[i+3] << 24u); i += 4;
+            if ((compression != 0) && ((compression != 3) || (bpp != 32)))// rgb or rgba
+                throw std::runtime_error("Invalid bmp file: cannot currently handle compressed images.");
+            bool isPalleted = (bpp == 4);
+            i += 4+4+4;
+            unsigned int palleteColorCount = file[i] | (file[i+1] << 8u) | (file[i+2] << 16u) | (file[i+3] << 24u); i += 4;
+            i = dataOffset;// skip to data
+            std::vector<unsigned char> pixels;
+            if (palleteColorCount == 0) {
+                for (size_t j = 0; j < width*height; j++) {
+                    pixels.push_back(file[i+2u]);
+                    pixels.push_back(file[i+1u]);
+                    pixels.push_back(file[i+0u]);
+                    if (bpp == 32) {
+                        pixels.push_back(file[i+3u]);
+                        i+=4;
+                    } else {// bbp = 24
+                        pixels.push_back(255);
+                        i+=3;
+                    }
+                }
+            } else {
+                size_t palleteSize = palleteColorCount*4;
+                std::vector<unsigned char> pallete(&file[i]-palleteSize, &file[i]);
+                size_t padding = (4-((width/2)%4))%4;
+                for (size_t j = 0; j < height; j++) {
+                    bool isFirst = true;
+                    for (size_t k = 0; k < width; k++) {
+                        unsigned int index;
+                        if (bpp == 4) {
+                            if (isFirst) index = (file[i] & 0xF0) >> 4;
+                            else {
+                                index = file[i] & 0x0F;
+                                i++;
+                            }
+                            isFirst=!isFirst;
+                        } else if (bpp == 8) {
+                            index = file[i];
+                            i++;
+                        }
+                        pixels.push_back(pallete[index*4u+2u]);
+                        pixels.push_back(pallete[index*4u+1u]);
+                        pixels.push_back(pallete[index*4u+0u]);
+                        pixels.push_back(255);
+                    }
+                    i += padding;
+                }
+            }
+            return new Texture(device, width, height, pixels.data());
+        }
+#pragma endregion TextureLoader
     }
 }

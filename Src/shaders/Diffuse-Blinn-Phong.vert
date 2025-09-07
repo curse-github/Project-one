@@ -8,28 +8,28 @@ layout (location = 0) out vec2 vertUv;
 layout (location = 1) out vec3 vertNormal;
 layout (location = 2) out vec3 vertWorldPosition;
 
-layout(push_constant) uniform Push {
+layout(push_constant) uniform PushVert {
     mat4 modelMat;
     mat4 normalMat;
-} push;
+} pushvert;
 
 layout (constant_id = 0) const uint MAX_LIGHTS = 1;
 struct Light {
     vec4 position;
     vec4 colorIntensity;
 };
-layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
+layout(set = 0, binding = 0) uniform GlobalUboData {
     mat4 projectionView;
     mat4 inverseView;
     vec4 ambientLightColor;
     uint numLights;
     Light lights[MAX_LIGHTS];
-} Gubo;
+};
 
 void main() {
-    vec4 worldPosition = push.modelMat * vec4(position, 1.0);
-    gl_Position = Gubo.projectionView * worldPosition;
+    vec4 worldPosition = pushvert.modelMat * vec4(position, 1.0);
+    gl_Position = projectionView * worldPosition;
     vertUv = uv;
-    vertNormal = mat3(push.normalMat) * normal;
+    vertNormal = mat3(pushvert.normalMat) * normal;
     vertWorldPosition = worldPosition.xyz/worldPosition.w;// perspective divide
 }

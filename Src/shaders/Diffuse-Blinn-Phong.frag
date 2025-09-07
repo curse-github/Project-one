@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_nonuniform_qualifier : require
 
 vec3 toneMap(vec3 x) {
     // ACES tone mapping
@@ -18,28 +19,34 @@ layout (location = 2) in vec3 fragWorldPosition;
 layout (location = 0) out vec4 outColor;
 
 layout (constant_id = 0) const int MAX_LIGHTS = 1;
+layout (constant_id = 1) const int NUM_TEXTURES = 1;
+
+layout(set = 1, binding = 0) uniform sampler2D texSamplers[NUM_TEXTURES];
 struct Light {
     vec4 position;
     vec4 colorIntensity;
 };
-layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
+layout(set = 0, binding = 0) uniform GlobalUboData {
     mat4 projectionView;
     mat4 inverseView;
     vec4 ambientLightColor;
     uint numLights;
     Light lights[MAX_LIGHTS];
-} Gubo;
-layout(set = 0, binding = 1) uniform sampler2D texSampler;
-
-vec3 specularColor = vec3(1.0, 1.0, 1.0);
+};
+layout(set = 2, binding = 0) uniform MaterialInfo {
+    vec4 spec;
+    uint texIdx;
+};
 
 void main() {
     vec3 normalNormal = normalize(fragNormal);
-    vec3 diffuseLightColor = Gubo.ambientLightColor.xyz*Gubo.ambientLightColor.w;
+    vec3 diffuseLightColor = ambientLightColor.xyz*ambientLightColor.w;
     vec3 specularLightColor = vec3(0.0);
-    vec3 viewDirection = normalize(Gubo.inverseView[3].xyz-fragWorldPosition);
-    for(uint i = 0; i < Gubo.numLights; i++) {
-        Light light = Gubo.lights[i];
+    vec3 viewDirection = normalize(inverseView[3].xyz-fragWorldPosition);
+    float N = spec.w;
+    float S = (N+8)/25.1327412287;
+    for(uint i = 0; i < numLights; i++) {
+        Light light = lights[i];
         vec3 lightDirection = light.position.xyz - fragWorldPosition;
         float attenuation = max(dot(lightDirection, lightDirection), 0.25);
         lightDirection = normalize(lightDirection);
@@ -47,11 +54,9 @@ void main() {
 
         diffuseLightColor += lightColor;
 
-        float blinnPhongTerm = dot(normalNormal, normalize(lightDirection + viewDirection));// normal . halfAngle
-        float N = 400.0;
-        float S = (N/4.0+8)/25.1327412287;
-        specularLightColor += lightColor*pow(clamp(blinnPhongTerm, 0, 1), N)*S;
+        float blinnPhongTerm = clamp(dot(normalNormal, normalize(lightDirection + viewDirection)), 0, 1);// normal . halfAngle
+        specularLightColor += lightColor*pow(blinnPhongTerm, N)*S;
     }
-    vec4 color = texture(texSampler, fragUv);
-    outColor = vec4(toneMap(diffuseLightColor*color.rgb + specularLightColor*specularColor), color.a);
+    vec4 color = texture(texSamplers[nonuniformEXT(texIdx)], fragUv);
+    outColor = vec4(toneMap(diffuseLightColor*color.rgb + specularLightColor*spec.rgb), color.a);
 }

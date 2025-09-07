@@ -84,7 +84,7 @@ namespace Eng {
         
         // VK_NULL_HANDLE is for a cache, used for optimization
         if (vkCreateGraphicsPipelines(device->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
-            throw std::runtime_error("failed to create graphics pipeline");
+            throw std::runtime_error("Failed to create graphics pipeline");
     }
     Pipeline::~Pipeline() {
         vkDestroyShaderModule(device->device, vertShaderModule, nullptr);
@@ -101,7 +101,7 @@ namespace Eng {
         createInfo.codeSize = code.size();
         createInfo.pCode = reinterpret_cast<const unsigned int*>(code.data());
         if (vkCreateShaderModule(device->device, &createInfo, nullptr, shaderModule) != VK_SUCCESS)
-            throw std::runtime_error("failed to create shader module");
+            throw std::runtime_error("Failed to create shader module");
     }
     void Pipeline::bind(VkCommandBuffer commandBuffer) {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
@@ -111,12 +111,6 @@ namespace Eng {
 
 
     void Pipeline::configSetDefaults(PipelineConfigInfo& config) {
-        // specialization info
-        unsigned int temp = MAX_LIGHTS;
-        config.vertSpecializationInfoEntries.push_back(VkSpecializationMapEntry{0, 0, sizeof(temp)});
-        config.vertSpecializationInfoData.insert(config.vertSpecializationInfoData.cend(), (char*)&temp, ((char*)&temp)+sizeof(temp));
-        config.fragSpecializationInfoEntries.push_back(VkSpecializationMapEntry{0, 0, sizeof(temp)});
-        config.fragSpecializationInfoData.insert(config.fragSpecializationInfoData.cend(), (char*)&temp, ((char*)&temp)+sizeof(temp));
         // viewportInfo
         config.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         config.viewportInfo.viewportCount = 1;
@@ -176,25 +170,15 @@ namespace Eng {
         config.dynamicStateInfo.dynamicStateCount = static_cast<unsigned int>(config.dynamicStateEnables.size());
     }
     void Pipeline::configEnableAlphaBlending(PipelineConfigInfo& config) {
-        /*config.colorBlendAttachment.colorWriteMask =
-            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        config.colorBlendAttachment.blendEnable = VK_TRUE;
-        config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-        config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-        config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional, since we dont check alpha values
-        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional, since we dont check alpha values
-        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional, since we dont check alpha values*/
         config.colorBlendAttachment.colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         config.colorBlendAttachment.blendEnable = VK_TRUE;
-        config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-        config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;// VK_BLEND_FACTOR_SRC_ALPHA;
+        config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional, since we dont check alpha values
+        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional, since we dont check alpha values
+        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional, since we dont check alpha values
     }
 }

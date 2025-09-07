@@ -7,9 +7,6 @@
 namespace Eng {
     class Buffer {
         Device* device;
-        VkDeviceSize instanceSize;
-        VkDeviceSize paddedInstaceSize;
-        VkDeviceSize instanceCount;
         VkDeviceSize bufferSize;
         VkBufferUsageFlags bufferUsage;
         VkMemoryPropertyFlags memoryProperties;
@@ -43,6 +40,10 @@ namespace Eng {
         void descriptorInfoForIndex(const unsigned int& index);
         
         VkBuffer getBuffer() { return buffer; };
+        
+        VkDeviceSize instanceSize;
+        VkDeviceSize paddedInstaceSize;
+        VkDeviceSize instanceCount;
     };
 }
 
