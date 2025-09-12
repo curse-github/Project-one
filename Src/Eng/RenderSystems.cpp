@@ -2,7 +2,7 @@
 
 namespace Eng {
     DiffuseBlinnPhongRenderSystem::DiffuseBlinnPhongRenderSystem(Device* _device, VkRenderPass renderPass,
-        VkDescriptorSetLayout& globalDescriptorSetLayout, VkDescriptorSetLayout& textureDescriptorSetLayout, const unsigned int& numTextures, DescriptorPool* globalDescriptorPool
+        VkDescriptorSetLayout& globalDescriptorSetLayout, VkDescriptorSetLayout& materialDescriptorSetLayout, const unsigned int& numTextures, const unsigned int& numMaterials, DescriptorPool* globalDescriptorPool
     ) : device(_device), pipeline(nullptr)
     {
         // define push constants
@@ -11,18 +11,18 @@ namespace Eng {
         pushConstantRanges[0].offset = 0;
         pushConstantRanges[0].size = sizeof(DefaultPushConstantData);
         // defined uniforms
-        materialDescriptorSetLayout = DescriptorSetLayout::Builder(device)
+        materialIndexDescriptorSetLayout = DescriptorSetLayout::Builder(device)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 1).build();
-        materialUniformBuffer = new Buffer(device, sizeof(MaterialUboData), 256, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device->properties.limits.minUniformBufferOffsetAlignment);
-        materialUniformBuffer->map();
-        VkDescriptorBufferInfo materialUniformBufferDescriptor = materialUniformBuffer->descriptorInfo(materialUniformBuffer->paddedInstaceSize);
-        DescriptorWriter(materialDescriptorSetLayout, globalDescriptorPool)
-            .writeBuffer(0, &materialUniformBufferDescriptor).build(materialDescriptorSet);
+        materialIndexUniformBuffer = new Buffer(device, sizeof(unsigned int), 256, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device->properties.limits.minUniformBufferOffsetAlignment);
+        materialIndexUniformBuffer->map();
+        VkDescriptorBufferInfo materialUniformBufferDescriptor = materialIndexUniformBuffer->descriptorInfo(materialIndexUniformBuffer->paddedInstaceSize);
+        DescriptorWriter(materialIndexDescriptorSetLayout, globalDescriptorPool)
+            .writeBuffer(0, &materialUniformBufferDescriptor).build(materialIndexDescriptorSet);
         // create layout
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         // used for sending any data to GPU, besides vertex data.
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalDescriptorSetLayout, textureDescriptorSetLayout, materialDescriptorSetLayout->descriptorSetLayout};
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalDescriptorSetLayout, materialDescriptorSetLayout, materialIndexDescriptorSetLayout->descriptorSetLayout};
         pipelineLayoutInfo.setLayoutCount = static_cast<unsigned int>(descriptorSetLayouts.size());
         pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
         // used for sending small amounts of data.
@@ -48,8 +48,14 @@ namespace Eng {
         pipelineConfig.fragSpecializationInfoEntries.push_back(VkSpecializationMapEntry{0, 0, sizeof(temp1)});
         pipelineConfig.fragSpecializationInfoData.insert(pipelineConfig.fragSpecializationInfoData.cend(), (char*)&numTextures, ((char*)&numTextures)+sizeof(numTextures));
         // give NUM_TEXTURES to the frag shader
+        temp1 = numTextures;
         pipelineConfig.fragSpecializationInfoEntries.push_back(VkSpecializationMapEntry{1, sizeof(temp1), sizeof(numTextures)});
         pipelineConfig.fragSpecializationInfoData.insert(pipelineConfig.fragSpecializationInfoData.cend(), (char*)&temp1, ((char*)&temp1)+sizeof(temp1));
+        // give NUM_MATERIALS to the frag shader
+        temp1 = numMaterials;
+        pipelineConfig.fragSpecializationInfoEntries.push_back(VkSpecializationMapEntry{2, sizeof(temp1)+sizeof(numTextures), sizeof(numMaterials)});
+        pipelineConfig.fragSpecializationInfoData.insert(pipelineConfig.fragSpecializationInfoData.cend(), (char*)&temp1, ((char*)&temp1)+sizeof(temp1));
+        
         // create actual pipeline
         pipeline = new Pipeline(device, "shaders/Diffuse-Blinn-Phong.vert.spv", "shaders/Diffuse-Blinn-Phong.frag.spv", pipelineConfig);
     }
@@ -60,17 +66,17 @@ namespace Eng {
     }
     void DiffuseBlinnPhongRenderSystem::recordObjects(FrameInfo& frameInfo) {
         pipeline->bind(frameInfo.commandBuffer);
-        std::vector<VkDescriptorSet> sets{frameInfo.globalDescriptorSet, frameInfo.textureDescriptorSet};
-        vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 2, sets.data(), 0, nullptr);
+        std::vector<VkDescriptorSet> sets{frameInfo.globalDescriptorSet, frameInfo.materialDescriptorSet};
+        vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<unsigned int>(sets.size()), sets.data(), 0, nullptr);
         unsigned int i = 0;
         for (std::pair<const GameObject::id_t, GameObject>& kv : *frameInfo.objects) {
             if (i == 256u) { std::cerr << "reached max object count.\n"; return; }
             GameObject& object = kv.second;
-            materialUniformBuffer->writeAtIndex(&object.material, i);
-            materialUniformBuffer->flushAtIndex(i);
-            unsigned int dynamicOffset = i*materialUniformBuffer->paddedInstaceSize;
+            materialIndexUniformBuffer->writeAtIndex(&object.materialIdx, i);
+            materialIndexUniformBuffer->flushAtIndex(i);
+            unsigned int dynamicOffset = i*materialIndexUniformBuffer->paddedInstaceSize;
             i++;
-            vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1, &materialDescriptorSet, 1, &dynamicOffset);
+            vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, static_cast<unsigned int>(sets.size()), 1, &materialIndexDescriptorSet, 1, &dynamicOffset);
             DefaultPushConstantData pushVert{object.transform.getTransformMat(), object.transform.getNormalMat()};
             vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(DefaultPushConstantData), &pushVert);
             object.mesh->bind(frameInfo.commandBuffer);

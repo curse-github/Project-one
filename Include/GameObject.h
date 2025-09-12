@@ -41,7 +41,7 @@ namespace Eng {
         TransformComponent transform;
         Mesh* mesh;
         PointLightComponent* light = nullptr;
-        MaterialUboData material;
+        unsigned int materialIdx;
     private:
         GameObject(const id_t& _id);
     };

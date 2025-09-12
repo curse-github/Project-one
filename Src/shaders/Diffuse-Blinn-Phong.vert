@@ -3,10 +3,12 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 uv;
 layout (location = 2) in vec3 normal;
+layout (location = 3) in vec3 tangent;
 
 layout (location = 0) out vec2 vertUv;
-layout (location = 1) out vec3 vertNormal;
-layout (location = 2) out vec3 vertWorldPosition;
+layout (location = 1) out vec3 vertTangent;
+layout (location = 2) out vec3 vertNormal;
+layout (location = 3) out vec3 vertWorldPosition;
 
 layout(push_constant) uniform PushVert {
     mat4 modelMat;
@@ -30,6 +32,8 @@ void main() {
     vec4 worldPosition = pushvert.modelMat * vec4(position, 1.0);
     gl_Position = projectionView * worldPosition;
     vertUv = uv;
-    vertNormal = mat3(pushvert.normalMat) * normal;
+    mat3 normalMat = mat3(pushvert.normalMat);
+    vertTangent = normalMat * tangent;
+    vertNormal = normalMat * normal;
     vertWorldPosition = worldPosition.xyz/worldPosition.w;// perspective divide
 }

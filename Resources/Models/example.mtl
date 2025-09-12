@@ -1,0 +1,86 @@
+# Blender MTL File: 'None'
+# Material Count: 1
+
+newmtl None
+# ambient color
+Ka 0.8 0.8 0.8
+# ambient color texture
+# map_Ka debug.bmp
+
+# diffuse color
+Kd 0.8 0.8 0.8
+# diffuse color texture
+# map_Kd debug.bmp
+
+# specular color
+Ks 0.8 0.8 0.8
+# specular color texture
+# map_Ks debug.bmp
+
+# specular exponent
+Ns 500.0
+# specular exponent texture
+# map_Ns debug.bmp
+
+# dissolve/transparency
+d 1
+# specular exponent texture
+# map_d debug.bmp
+
+# bump/normal maps use either map_norm, map_bump, or just norm or bump
+map_norm debug.bmp
+# map_bump debug.bmp
+# norm debug.bmp
+# bump debug.bmp
+
+# theres also displacement and reflection maps
+
+# opposite of transparency or (1 - d)
+# Tr 0.1
+# I probably wont accept maps of this for my program
+
+# transmisssion color?
+Tf 1.0 1.0 1.0
+# transmission color in CIEXYZ color space
+#Tf xyz 1.0 0.5 0.5
+# transmission color in file by wavlength
+#Tf spectral <rtl file> <multiplier?>
+# index of refraction
+Ni 1.45
+
+# illum takes one of 11 values
+#      0. Color on and Ambient off
+#      1. Color on and Ambient on
+#      2. Highlight on
+#      3. Reflection on and Ray trace on
+#      4. Transparency: Glass on, Reflection: Ray trace on
+#      5. Reflection: Fresnel on and Ray trace on
+#      6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
+#      7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
+#      8. Reflection on and Ray trace off
+#      9. Transparency: Glass on, Reflection: Ray trace off
+#     10. Casts shadows onto invisible surfaces
+illum 2
+
+# there are also several options starting with a -
+# the relevant ones to me are maybe
+# bump map multiplier
+# -bm <multiplier>
+# image chanel specifier
+# -imfchan r|g|b|m|l|z
+# these are specified as such
+# map_bump -bm 1.5 file.bmp
+# or
+# map_bump -imfchan b file.bmp
+# sometimes options may actually be after the filename though...
+
+
+# PBR render attributes
+# PR/map_Pr is roughness
+# Pm/map_Pm is metallic
+# Ps/map_Ps is sheen
+# Pc is clearcoat thickness
+# Pcr is clearcoat roughness
+# Ke/map_Ke is emission
+# aniso is anisotropy
+# anisor is anisotropy rotation

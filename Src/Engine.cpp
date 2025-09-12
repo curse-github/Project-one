@@ -11,33 +11,47 @@ namespace Eng {
         std::cout << "maxTextures: " << maxTextures << '\n';
 #endif
         globalDescriptorPool = DescriptorPool::Builder(&device)
-            .setMaxSets(Swapchain::MAX_FRAMES_IN_FLIGHT+2)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT+1)
+            .setMaxSets(Swapchain::MAX_FRAMES_IN_FLIGHT+3)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT+2)
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, maxTextures)
             .build();
             
-        textureIndxs[""] = 0u;
+        textureIdxs[""] = 0u;
         textures.push_back(Loaders::TextureLoader::fromBmp(&device, "Resources/Textures/White.bmp"));
     }
     Engine::~Engine() {
     }
-    GameObject::id_t Engine::addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh,
-        const std::string& texture, const vec3& specColor, const float& specExp) {
-        if (meshes.count(mesh) == 0) meshes[mesh] = Loaders::MeshLoader::fromObj(&device, mesh);
-        if (textureIndxs.count(texture) == 0) {
+
+    unsigned int Engine::storeTexture(const std::string& texture) {
+        if (textureIdxs.count(texture) == 0) {
             if (textures.size() == maxTextures)
                 throw std::runtime_error("Tried to load too many textures!");
-            textureIndxs[texture] = textures.size();
+            textureIdxs[texture] = textures.size();
             textures.push_back(Loaders::TextureLoader::fromBmp(&device, texture));
+        }
+        return textureIdxs[texture];
+    }
+    unsigned int Engine::storeMaterial(const std::string& materialName, const MaterialUboData& data) {
+        materialIdxs[materialName] = materials.size();
+        materials.push_back(data);
+        return materialIdxs[materialName];
+    }
+    GameObject::id_t Engine::addObject(
+        const vec3& position, const vec3& scale, const vec3& rotation,
+        const std::string& mesh, const std::string& materialFile, const std::string& material
+    ) {
+        if (meshes.count(mesh) == 0) meshes[mesh] = Loaders::MeshLoader::fromObj(&device, mesh);
+        if (loadedMtls.count(materialFile) == 0) {
+            loadedMtls[materialFile] = 1;
+            Loaders::MaterialLoader::fromMtl(&device, materialFile, this);
         }
         GameObject object = GameObject::createGameObject();
         object.mesh = meshes[mesh].value;
         object.transform.position = position;
         object.transform.scale = scale;
         object.transform.rotation = rotation;
-        object.material.texIdx = textureIndxs[texture];
-        object.material.spec = vec4(specColor, specExp);
+        object.materialIdx = materialIdxs[materialFile+material];
         objects.emplace(object.id, (GameObject&&)object);
         return object.id;
     }
@@ -88,39 +102,52 @@ namespace Eng {
     unsigned int frames = 0;
     void Engine::run() {
         // create uniform buffers
-        std::vector<OwnedPointer<Buffer>> uniformBuffers;
+        std::vector<OwnedPointer<Buffer>> globalUniformBuffers;
         for (unsigned int i = 0; i < Swapchain::MAX_FRAMES_IN_FLIGHT; i++) {
-            uniformBuffers.emplace_back(new Buffer(&device, sizeof(GlobalUboData), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device.properties.limits.minUniformBufferOffsetAlignment));
-            uniformBuffers[i]->map();
+            globalUniformBuffers.emplace_back(new Buffer(&device, sizeof(GlobalUboData), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device.properties.limits.minUniformBufferOffsetAlignment));
+            globalUniformBuffers[i]->map();
         }
+        OwnedPointer<Buffer> materialUniformBuffer = new Buffer(&device, sizeof(MaterialUboData), materials.size(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device.properties.limits.minUniformBufferOffsetAlignment);
+        materialUniformBuffer->map();
+        materialUniformBuffer->write(materials.data(), materials.size());
+        materialUniformBuffer->flush();
+        
         // create uniform buffer descriptor set layouts
         OwnedPointer<DescriptorSetLayout> globalDescriptorSetLayout = DescriptorSetLayout::Builder(&device)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT).build();
-        OwnedPointer<DescriptorSetLayout> textureDescriptorSetLayout = DescriptorSetLayout::Builder(&device)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, textures.size()).build();
+        OwnedPointer<DescriptorSetLayout> materialDescriptorSetLayout = DescriptorSetLayout::Builder(&device)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, textures.size())
+            .addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT).build();
         // create uniform buffer descriptor sets
         std::vector<VkDescriptorSet> globalDescriptorSets(Swapchain::MAX_FRAMES_IN_FLIGHT);
-        VkDescriptorSet textureDescriptorSet;
+        VkDescriptorSet materialDescriptorSet;
         // populate uniform buffer descriptor sets with descriptors
+        // global uniform buffer descriptors
         for (int i = 0; i < Swapchain::MAX_FRAMES_IN_FLIGHT; i++) {
-            VkDescriptorBufferInfo bufferDescriptor = uniformBuffers[i]->descriptorInfo();
+            VkDescriptorBufferInfo bufferDescriptor = globalUniformBuffers[i]->descriptorInfo();
             if (!DescriptorWriter(globalDescriptorSetLayout.value, globalDescriptorPool).writeBuffer(0, &bufferDescriptor).build(globalDescriptorSets[i]))
                 std::cout << "building ubo descriptor set failed.\n";
         }
+        // texture descriptors
         std::vector<VkDescriptorImageInfo> textureDescriptors(textures.size());
         for (size_t i = 0; i < textures.size(); i++) textureDescriptors[i] = textures[i]->descriptorInfo();
-        if (!DescriptorWriter(textureDescriptorSetLayout.value, globalDescriptorPool)
-            .writeImages(0, textureDescriptors.data(), textureDescriptors.size()).build(textureDescriptorSet))
-                std::cout << "building texture descriptor set failed.\n";
+        // material descriptor
+        VkDescriptorBufferInfo materialUniformBufferDescriptor = materialUniformBuffer->descriptorInfo();
+        if (
+            !(DescriptorWriter(materialDescriptorSetLayout.value, globalDescriptorPool)
+            .writeImages(0, textureDescriptors.data(), textureDescriptors.size())
+            .writeBuffer(1, &materialUniformBufferDescriptor).build(materialDescriptorSet))
+        )
+            std::cout << "building material descriptor set failed.\n";
         
         // setup rendering
-        DiffuseBlinnPhongRenderSystem renderSystems(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout, textureDescriptorSetLayout->descriptorSetLayout, textures.size(), globalDescriptorPool);
+        DiffuseBlinnPhongRenderSystem renderSystems(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout, materialDescriptorSetLayout->descriptorSetLayout, textures.size(), materials.size(), globalDescriptorPool);
         PointLightRenderSystem pointLightRenderSystem(&device, renderer.getRenderPass(), globalDescriptorSetLayout->descriptorSetLayout);
         Camera camera;
         TransformComponent viewerTransform;
         viewerTransform.position.z = -2.5f;
         camera.setViewYXZ(viewerTransform.position, viewerTransform.rotation);
-        FrameInfo frameInfo{ 0, 0.0f, 0.0f, VK_NULL_HANDLE, &camera, VK_NULL_HANDLE, textureDescriptorSet, &objects, &lights };
+        FrameInfo frameInfo{ 0, 0.0f, 0.0f, VK_NULL_HANDLE, &camera, VK_NULL_HANDLE, materialDescriptorSet, &objects, &lights };
         std::chrono::_V2::system_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
         while(!window.shouldClose()) {
             glfwPollEvents();
@@ -143,7 +170,7 @@ namespace Eng {
                 frameInfo.t += dt;
                 frameInfo.dt = dt;
                 frameInfo.globalDescriptorSet = globalDescriptorSets[frameInfo.frameIndex];
-                frameInfo.textureDescriptorSet = textureDescriptorSet;
+                frameInfo.materialDescriptorSet = materialDescriptorSet;
                 if (pollMovement(glm::min(dt, 1.0f/30.0f), viewerTransform))
                     camera.setViewYXZ(viewerTransform.position, viewerTransform.rotation);
                 // let user update things
@@ -159,8 +186,8 @@ namespace Eng {
                 uniformBufferElement.numLights = i;
                 uniformBufferElement.projectionView = frameInfo.camera->projection * frameInfo.camera->view;
                 uniformBufferElement.inverseView = frameInfo.camera->inverseView;
-                uniformBuffers[frameInfo.frameIndex]->writeAtIndex(&uniformBufferElement, 0);
-                uniformBuffers[frameInfo.frameIndex]->flushAtIndex(0);
+                globalUniformBuffers[frameInfo.frameIndex]->writeAtIndex(&uniformBufferElement, 0);
+                globalUniformBuffers[frameInfo.frameIndex]->flushAtIndex(0);
                 // start rendering
                 renderer.beginRenderPass(frameInfo.commandBuffer);
 

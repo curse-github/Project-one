@@ -19,14 +19,14 @@ namespace Eng {
         Device* device;
         Pipeline* pipeline;
         VkPipelineLayout pipelineLayout;
-        OwnedPointer<DescriptorSetLayout> materialDescriptorSetLayout;
-        VkDescriptorSet materialDescriptorSet;
-        OwnedPointer<Buffer> materialUniformBuffer;
+        OwnedPointer<DescriptorSetLayout> materialIndexDescriptorSetLayout;
+        VkDescriptorSet materialIndexDescriptorSet;
+        OwnedPointer<Buffer> materialIndexUniformBuffer;
 
         void recordCommandBuffer(const int& imageIndex);
     public:
         DiffuseBlinnPhongRenderSystem(Device* _device, VkRenderPass renderPass,
-            VkDescriptorSetLayout& globalDescriptorSetLayout, VkDescriptorSetLayout& textureDescriptorSetLayout, const unsigned int& numTextures, DescriptorPool* globalDescriptorPool);
+            VkDescriptorSetLayout& globalDescriptorSetLayout, VkDescriptorSetLayout& materialDescriptorSetLayout, const unsigned int& numTextures, const unsigned int& numMaterials, DescriptorPool* globalDescriptorPool);
         DiffuseBlinnPhongRenderSystem(const DiffuseBlinnPhongRenderSystem& copy) = delete;
         DiffuseBlinnPhongRenderSystem& operator=(const DiffuseBlinnPhongRenderSystem& copy) = delete;
         DiffuseBlinnPhongRenderSystem(DiffuseBlinnPhongRenderSystem&& move) = delete;

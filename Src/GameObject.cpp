@@ -26,13 +26,13 @@ namespace Eng {
         return mat3(
             vec3(c1*c3+s1*s2*s3, c2*s3, c1*s2*s3-s1*c3)/scale.x,
             vec3(s1*s2*c3-c1*s3, c2*c3, c1*s2*c3+s1*s3)/scale.y,
-            vec3(s1*c2, -s2, c1*c2)/scale.z
+            vec3(s1*c2,-s2,c1*c2)/scale.z
         );
     }
 
     GameObject::GameObject(const id_t& _id) : id(_id) {
     }
-    GameObject::GameObject(GameObject&& move) : id(move.id), transform(move.transform), mesh(move.mesh), light(move.light), material(move.material) { move.light = nullptr; }
+    GameObject::GameObject(GameObject&& move) : id(move.id), transform(move.transform), mesh(move.mesh), light(move.light), materialIdx(move.materialIdx) { move.light = nullptr; }
     GameObject GameObject::createGameObject() {
         static GameObject::id_t currentId = 0;
         return GameObject(currentId++);

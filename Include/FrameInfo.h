@@ -12,7 +12,7 @@ namespace Eng {
         VkCommandBuffer commandBuffer;
         Camera* camera;
         VkDescriptorSet globalDescriptorSet;
-        VkDescriptorSet textureDescriptorSet;
+        VkDescriptorSet materialDescriptorSet;
         GameObject::Map* objects;
         GameObject::Map* lights;
     };

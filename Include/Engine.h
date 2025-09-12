@@ -30,7 +30,10 @@ namespace Eng {
         std::unordered_map<std::string, OwnedPointer<Mesh>> meshes;
         unsigned int maxTextures;
         std::vector<OwnedPointer<Texture>> textures;
-        std::unordered_map<std::string, size_t> textureIndxs;
+        std::unordered_map<std::string, size_t> textureIdxs;
+        std::unordered_map<std::string, unsigned int> loadedMtls;
+        std::vector<MaterialUboData> materials;
+        std::unordered_map<std::string, size_t> materialIdxs;
         GameObject::Map objects;
         GameObject::Map lights;
         
@@ -44,7 +47,9 @@ namespace Eng {
         Engine& operator=(Engine&& move) = delete;
         ~Engine();
 
-        GameObject::id_t addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh, const std::string& texture, const vec3& specColor, const float& specExp);
+        unsigned int storeTexture(const std::string& texture);
+        unsigned int storeMaterial(const std::string& materialName, const MaterialUboData& data);
+        GameObject::id_t addObject(const vec3& position, const vec3& scale, const vec3& rotation, const std::string& mesh, const std::string& materialFile, const std::string& material);
         GameObject::id_t addLight(const vec3& position, const float& size, const vec3& color, const float& intensity);
         
         void start();

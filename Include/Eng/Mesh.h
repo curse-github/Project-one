@@ -18,6 +18,7 @@ namespace Eng {
             vec3 position{};
             vec2 uv{};
             vec3 normal{};
+            vec3 tangent{};
 
             bool operator==(const Vertex &other) const {
                 return (position == other.position) && (uv == other.uv) && (normal == other.normal);

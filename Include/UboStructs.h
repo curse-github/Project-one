@@ -17,8 +17,17 @@ namespace Eng {
         alignas(16) pointLight pointLights[MAX_LIGHTS];
     };
     struct MaterialUboData {
-        vec4 spec;
-        unsigned int texIdx;
+        vec4 diffuseColor_Transparency{1.0f, 1.0f, 1.0f, 1.0f};
+        vec4 specColor_Exp{1.0f, 1.0f, 1.0f, 0.0f};
+        unsigned int map_diff = 0;
+        unsigned int map_specC = 0;
+        unsigned int map_specE = 0;
+        unsigned int map_norm = 0;
+        // tangent found from uv
+        // bi_tange = cross(normal, tangent)
+        // normal = map_norm.r * tangent
+        //          + map_norm.g * bi_tangent
+        //          + map_norm.b * normal
     };
 }
 

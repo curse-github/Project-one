@@ -1,4 +1,5 @@
 #include "Loaders.h"
+#include "Engine.h"
 
 namespace std {
     template <>
@@ -116,17 +117,20 @@ namespace Eng {
                     pushVertex({
                         positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
-                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]]
+                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                     pushVertex({
                         positions[ints[3]],
                         (ints[4]==-1)?vec2(0.0f, 0.0f):uvs[ints[4]],
-                        (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]]
+                        (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                     pushVertex({
                         positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
-                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]]
+                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                 } else if (ints.size() == 12) {
 #if defined(_DEBUG) && (_DEBUG==1)
@@ -135,32 +139,38 @@ namespace Eng {
                     pushVertex({
                         positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
-                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]]
+                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                     pushVertex({
                         positions[ints[3]],
                         (ints[4]==-1)?vec2(0.0f, 0.0f):uvs[ints[4]],
-                        (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]]
+                        (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                     pushVertex({
                         positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
-                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]]
+                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                     pushVertex({
                         positions[ints[9]],
                         (ints[10]==-1)?vec2(0.0f, 0.0f):uvs[ints[10]],
-                        (ints[11]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[11]]
+                        (ints[11]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[11]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                     pushVertex({
                         positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
-                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]]
+                        (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                     pushVertex({
                         positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
-                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]]
+                        (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
+                        {0.0f, 0.0f ,0.0f}
                     }, data);
                 } else throw std::runtime_error("Invalid wav file: invalid face definition");
                 ints.clear();
@@ -270,5 +280,165 @@ namespace Eng {
             return new Texture(device, width, height, pixels.data());
         }
 #pragma endregion TextureLoader
+
+#pragma region MaterialLoader
+        std::string currMatName = "";
+        MaterialUboData material{};
+        void MaterialLoader::processLine(const std::string& filePath, const std::string& line, Mesh::MeshData& data, Engine* engine) {
+            size_t llen = line.size();
+            if ((line.size() == 0) || (line[0] == '#'))// comments
+                return;
+            else if ((line[0] == 'n') && (line[3] == 'm')) {// newmtl, norm
+                if (line[1] == 'e') {// newmtl: name of next material
+                    if ((line[2] != 'w') || (line[4] != 't') || (line[5] != 'l') || (line[6] != ' ')) throw std::runtime_error("Invalid mtl file: unknown property0");
+                    if (currMatName != "")
+                        engine->storeMaterial(currMatName, material);// store last material
+                    currMatName = filePath+line.substr(7);// cut off "newmtl "
+                    material = MaterialUboData{};
+                } else if ((line[1] == 'o') && (line[2] == 'r') && (line[4] == ' ')) {// norm: normal map
+                    unsigned int normalMap = engine->storeTexture(line.substr(5));// cut off "norm " and load the texture
+                    material.map_norm = normalMap;
+                }
+                return;
+            } else if (line[0] == 'K') {// Ka, Kd, Ks, Ke
+                if (line[2] != ' ') throw std::runtime_error("Invalid mtl file: unknown property1");
+                // for Ka, Kd, Ks, and Ke I need to parse 3 floats
+                floats.reserve(3);
+                for (size_t j = 3; j < llen; j++) {
+                    if ((line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
+                        num += line[j];
+                    else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; }
+                    else throw std::runtime_error("Invalid mtl file: invalid character found in color.");
+                }
+                floats.push_back(std::stof(num)); num="";
+                if (floats.size() != 3) throw std::runtime_error("Invalid mtl file: incorrect amount of numbers in color");
+
+                if (line[1] == 'a') {// Ka: ambient color// currently treated the same as diffuse color
+                    // set diffuse color while maintaining alpha
+                    material.diffuseColor_Transparency = vec4(floats[0], floats[1], floats[2], material.diffuseColor_Transparency.w);
+                } else if (line[1] == 'd') {// Kd: diffuse color
+                    // set diffuse color while maintaining alpha
+                    material.diffuseColor_Transparency = vec4(floats[0], floats[1], floats[2], material.diffuseColor_Transparency.w);
+                } else if (line[1] == 's') {// Ks: specular color
+                    // set specular color while maintaining exponent
+                    material.specColor_Exp = vec4(floats[0], floats[1], floats[2], material.specColor_Exp.w);
+                } else if (line[1] == 'e') {// Ke: emission color
+                    // not currently handled
+                } else {
+                    throw std::runtime_error("Invalid mtl file: unknown property2");
+                }
+                floats.clear();
+                return;
+            } else if ((line[0] == 'N')) {// Ns
+                if ((line[1] != 's') || (line[2] != ' ')) throw std::runtime_error("Invalid mtl file: unknown property3");
+                floats.reserve(1);
+                for (size_t j = 3; j < llen; j++) {
+                    if ((line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
+                        num += line[j];
+                    else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; }
+                    else throw std::runtime_error("Invalid mtl file: invalid character found in color.");
+                }
+                floats.push_back(std::stof(num)); num="";
+                if (floats.size() != 1) throw std::runtime_error("Invalid mtl file: incorrect amount of numbers in transparency");
+
+                material.specColor_Exp.w = floats[0];
+                floats.clear();
+                return;
+            } else if (line[0] == 'd') {// d
+                if (line[1] != ' ') throw std::runtime_error("Invalid mtl file: unknown property4");
+                floats.reserve(1);
+                for (size_t j = 2; j < llen; j++) {
+                    if ((line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
+                        num += line[j];
+                    else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; }
+                    else throw std::runtime_error("Invalid mtl file: invalid character found in color.");
+                }
+                floats.push_back(std::stof(num)); num="";
+                if (floats.size() != 1) throw std::runtime_error("Invalid mtl file: incorrect amount of numbers in transparency");
+
+                material.diffuseColor_Transparency.w = floats[0];
+                floats.clear();
+                return;
+            } else if (line[0] == 'm') {// map_*
+                if ((line[1] != 'a') || (line[2] != 'p') || (line[3] != '_')) throw std::runtime_error("Invalid mtl file: unknown property5");
+                if (line[4] == 'K') {
+                    if (line[6] != ' ') throw std::runtime_error("Invalid mtl file: unknown property6");
+                    if (line[5] == 'a') {// map_Ka: ambient color map// currently treated the same as diffuse color
+                        unsigned int diffuseMap = engine->storeTexture(line.substr(7));// cut off "map_Ka " and load the texture
+                        material.map_diff = diffuseMap;
+                        return;
+                    } else if (line[5] == 'd') {// map_Kd: diffuse color map
+                        unsigned int diffuseMap = engine->storeTexture(line.substr(7));// cut off "map_Kd " and load the texture
+                        material.map_diff = diffuseMap;
+                        return;
+                    } else if (line[5] == 's') {// map_Ks: specular color map
+                        unsigned int specularColorMap = engine->storeTexture(line.substr(7));// cut off "map_Ks " and load the texture
+                        material.map_specC = specularColorMap;
+                        return;
+                    }
+                    // others that arent supported
+                } else if (line[4] == 'N') {// map_Ns: specular exponent map
+                    std::cout << line << '\n';
+                    if ((line[5] != 's') || (line[6] != ' ')) throw std::runtime_error("Invalid mtl file: unknown property7");
+                    unsigned int specularExpMap = engine->storeTexture(line.substr(7));// cut off "map_Ns " and load the texture
+                    material.map_specE = specularExpMap;
+                    return;
+                } else if ((line[4] == 'd')) {// map_d: dissolve/transparency map
+                    if (line[5] != ' ') throw std::runtime_error("Invalid mtl file: unknown property8");
+                    // not currently handled
+                    return;
+                } else if ((line[4] == 'n')) {// map_norm: normal map
+                    unsigned int normalMap = engine->storeTexture(line.substr(9));// cut off "map_norm " and load the texture
+                    material.map_norm = normalMap;
+                    return;
+                } else if ((line[4] == 'b')) {// map_bump: bump map// currently trated the same as normal map
+                    unsigned int normalMap = engine->storeTexture(line.substr(9));// cut off "map_bump " and load the texture
+                    material.map_norm = normalMap;
+                    return;
+                }
+                throw std::runtime_error("Invalid mtl file: unknown property9");
+            } else if (line[0] == 'b') {// bump, currently treated the same as normal map
+                if (
+                    (line[1] != 'u') || (line[2] != 'm') ||
+                    (line[3] != 'p') || (line[4] != '_')
+                ) throw std::runtime_error("Invalid mtl file: unknown property10");
+
+                unsigned int normalMap = engine->storeTexture(line.substr(5));// cut off "bump " and load the texture
+                material.map_norm = normalMap;
+                return;
+            } else if (line[0] == 'T') {// Tr, Tf
+                return;// not handled right now
+            } else if (line[0] == 'i') {
+                return;// not handled right now
+            } else if (line[0] == 'P') {// PBR values: Pr,Pm,Ps,Pc,Pcr
+                return;// not handled right now
+            } else if (line[0] == 'a') {// aniso, anisor
+                return;// not handled right now
+            }
+            std::cout << line << '\n';
+            throw std::runtime_error("Invalid mtl file: unknown property11");
+        }
+        void MaterialLoader::fromMtl(Device* device, const std::string& filePath, Engine* engine) {
+#if defined(_DEBUG) && (_DEBUG==1)
+            std::chrono::_V2::system_clock::time_point startTime = std::chrono::high_resolution_clock::now();
+#endif
+            std::vector<char> file = readFile(filePath);
+            const size_t flen = file.size();
+            std::string line;
+            
+            Mesh::MeshData data;
+            for (size_t i = 0; i < flen; i++) {
+                if (file[i] == '\n') {
+                    processLine(filePath, line, data, engine);
+                    line = "";
+                } else if (file[i] == '\r') continue;
+                else line += file[i];
+            }
+            processLine(filePath, line, data, engine);
+            if (currMatName != "")
+                engine->storeMaterial(currMatName, material);// store last material
+            currMatName = "";
+        }
+#pragma endregion MaterialLoader
     }
 }
