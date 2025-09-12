@@ -6,7 +6,7 @@ namespace std {
     struct hash<Eng::Mesh::Vertex> {
         size_t operator()(Eng::Mesh::Vertex const& vertex) const {
             size_t seed = 0;
-            hashCombine(seed, vertex.position, vertex.uv, vertex.normal);
+            hashCombine(seed, vertex.position, vertex.uv, vertex.normal, vertex.tangent);
             return seed;
         }
     };
@@ -21,17 +21,68 @@ namespace Eng {
         static std::vector<vec3> positions;
         static std::vector<vec2> uvs;
         static std::vector<vec3> normals;
+        std::vector<vec3> tangents;
+        std::vector<vec3> biTangents;
+        std::vector<float> tangentWeights;
         static std::unordered_map<Mesh::Vertex, unsigned int> uniqueVertices{};
 #if defined(_DEBUG) && (_DEBUG==1)
         static unsigned int numTris = 0;
 #endif
-        void MeshLoader::pushVertex(Mesh::Vertex&& _vertex, Mesh::MeshData& data) {
+        void MeshLoader::calcTangent(const unsigned int& vertexIdx0, const unsigned int& vertexIdx1, const unsigned int& vertexIdx2, Mesh::MeshData& data) {
+            const Mesh::Vertex& vertex0 = data.vertices[vertexIdx0];
+            const Mesh::Vertex& vertex1 = data.vertices[vertexIdx1];
+            const Mesh::Vertex& vertex2 = data.vertices[vertexIdx2];
+            vec3 dP01 = vertex1.position - vertex0.position;
+            vec3 dP02 = vertex2.position - vertex0.position;
+            vec2 dUV1 = vertex1.uv - vertex0.uv;
+            vec2 dUV2 = vertex2.uv - vertex0.uv;
+            float ir = dUV1.x*dUV2.y - dUV1.y*dUV2.x;
+            ir += (ir==0.0f)*0.0001f;
+            float r = 1/ir;
+            vec3 tangent = dP01*dUV2.y - dP02*dUV1.y;
+            vec3 biTangent = dP02*dUV1.x - dP01*dUV2.x;
+            vec3 dP10 = glm::normalize(vertex0.position - vertex1.position);
+            vec3 dP12 = glm::normalize(vertex2.position - vertex1.position);
+            vec3 dP20 = glm::normalize(vertex0.position - vertex2.position);
+            vec3 dP21 = glm::normalize(vertex1.position - vertex2.position);
+            float weight1 = glm::acos(glm::dot(glm::normalize(dP01), glm::normalize(dP02)));
+            float weight2 = glm::acos(glm::dot(dP10, dP12));
+            float weight3 = glm::acos(glm::dot(dP20, dP21));
+            tangents[vertexIdx0] += tangent*weight1;
+            tangents[vertexIdx1] += tangent*weight2;
+            tangents[vertexIdx2] += tangent*weight3;
+            tangentWeights[vertexIdx0] += weight1;
+            tangentWeights[vertexIdx1] += weight2;
+            tangentWeights[vertexIdx2] += weight3;
+            biTangents[vertexIdx0] += biTangent*weight1;
+            biTangents[vertexIdx1] += biTangent*weight2;
+            biTangents[vertexIdx2] += biTangent*weight3;
+        }
+        unsigned int MeshLoader::pushVertex(Mesh::Vertex&& _vertex, Mesh::MeshData& data) {
             Mesh::Vertex vertex = _vertex;
             if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<unsigned int>(data.vertices.size());
+                unsigned int index = static_cast<unsigned int>(data.vertices.size());
+                uniqueVertices[vertex] = index;
                 data.vertices.push_back((Mesh::Vertex&&)vertex);
+                tangents.push_back({0.0f, 0.0f, 0.0f});
+                biTangents.push_back({0.0f, 0.0f, 0.0f});
+                tangentWeights.push_back(0.0f);
+
+                return index;
             }
-            data.indices.push_back(uniqueVertices[vertex]);
+            return uniqueVertices[vertex];
+        }
+        void MeshLoader::pushTri(Mesh::Vertex&& _vertex0, Mesh::Vertex&& _vertex1, Mesh::Vertex&& _vertex2, Mesh::MeshData& data) {
+            Mesh::Vertex vertex0 = _vertex0;
+            Mesh::Vertex vertex1 = _vertex1;
+            Mesh::Vertex vertex2 = _vertex2;
+            unsigned int vertexIdx0 = pushVertex((Mesh::Vertex&&)vertex0, data);
+            unsigned int vertexIdx1 = pushVertex((Mesh::Vertex&&)vertex1, data);
+            unsigned int vertexIdx2 = pushVertex((Mesh::Vertex&&)vertex2, data);
+            data.indices.push_back(vertexIdx0);
+            data.indices.push_back(vertexIdx1);
+            data.indices.push_back(vertexIdx2);
+            calcTangent(vertexIdx0, vertexIdx1, vertexIdx2, data);
         }
         void MeshLoader::processLine(const std::string& line, Mesh::MeshData& data) {
             size_t llen = line.size();
@@ -88,7 +139,7 @@ namespace Eng {
                     }
                     floats.push_back(std::stof(num)); num="";
                     // do things with numbers
-                    if (floats.size() == 3) normals.push_back(vec3(floats[0], floats[1], floats[2]));
+                    if (floats.size() == 3) normals.push_back(glm::normalize(vec3(floats[0], floats[1], floats[2])));
                     else throw std::runtime_error("Invalid wav file: incorrect number of numbers in vertex normal.");
                 }
                 floats.clear();
@@ -114,63 +165,57 @@ namespace Eng {
 #if defined(_DEBUG) && (_DEBUG==1)
                     ++numTris;
 #endif
-                    pushVertex({
+                    pushTri({
                         positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
                         (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
-                        {0.0f, 0.0f ,0.0f}
-                    }, data);
-                    pushVertex({
+                        {0.0f, 0.0f ,0.0f, 0.0f}
+                    }, {
                         positions[ints[3]],
                         (ints[4]==-1)?vec2(0.0f, 0.0f):uvs[ints[4]],
                         (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]],
-                        {0.0f, 0.0f ,0.0f}
-                    }, data);
-                    pushVertex({
+                        {0.0f, 0.0f ,0.0f, 0.0f}
+                    }, {
                         positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
                         (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
-                        {0.0f, 0.0f ,0.0f}
+                        {0.0f, 0.0f ,0.0f, 0.0f}
                     }, data);
                 } else if (ints.size() == 12) {
 #if defined(_DEBUG) && (_DEBUG==1)
                     numTris += 2;
 #endif
-                    pushVertex({
+                    pushTri({
                         positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
                         (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
-                        {0.0f, 0.0f ,0.0f}
-                    }, data);
-                    pushVertex({
+                        {0.0f, 0.0f ,0.0f, 0.0f}
+                    }, {
                         positions[ints[3]],
                         (ints[4]==-1)?vec2(0.0f, 0.0f):uvs[ints[4]],
                         (ints[5]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[5]],
-                        {0.0f, 0.0f ,0.0f}
-                    }, data);
-                    pushVertex({
+                        {0.0f, 0.0f ,0.0f, 0.0f}
+                    }, {
                         positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
                         (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
-                        {0.0f, 0.0f ,0.0f}
+                        {0.0f, 0.0f ,0.0f, 0.0f}
                     }, data);
-                    pushVertex({
+                    pushTri({
                         positions[ints[9]],
                         (ints[10]==-1)?vec2(0.0f, 0.0f):uvs[ints[10]],
                         (ints[11]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[11]],
-                        {0.0f, 0.0f ,0.0f}
-                    }, data);
-                    pushVertex({
+                        {0.0f, 0.0f ,0.0f, 0.0f}
+                    }, {
                         positions[ints[0]],
                         (ints[1]==-1)?vec2(0.0f, 0.0f):uvs[ints[1]],
                         (ints[2]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[2]],
-                        {0.0f, 0.0f ,0.0f}
-                    }, data);
-                    pushVertex({
+                        {0.0f, 0.0f ,0.0f, 0.0f}
+                    }, {
                         positions[ints[6]],
                         (ints[7]==-1)?vec2(0.0f, 0.0f):uvs[ints[7]],
                         (ints[8]==-1)?vec3(0.0f, 1.0f, 0.0f):normals[ints[8]],
-                        {0.0f, 0.0f ,0.0f}
+                        {0.0f, 0.0f ,0.0f, 0.0f}
                     }, data);
                 } else throw std::runtime_error("Invalid wav file: invalid face definition");
                 ints.clear();
@@ -207,7 +252,22 @@ namespace Eng {
 #if defined(_DEBUG) && (_DEBUG==1)
             numTris = 0;
 #endif
-            return new Mesh(device, data);
+            // resolve tangents
+            for (size_t i = 0; i < data.vertices.size(); i++) {
+                vec3 normal = data.vertices[i].normal;
+                // get weighted average of tangents
+                vec3 tangent = tangents[i]/tangentWeights[i];
+                // ortho-normalize the tangent with the normal
+                tangent = normalize(tangent - normal*glm::dot(normal, tangent));
+                // gen handedness: whether the re-calculated normal is in the same or opposite direction of original tangent
+                float handedness = (glm::dot(biTangents[i], glm::cross(normal, tangent)) < 0)*-2+1;
+                // set tangent on vertex
+                data.vertices[i].tangent = vec4(tangent, handedness);
+            }
+            tangents.clear();
+            biTangents.clear();
+            tangentWeights.clear();
+            return new Mesh(device, (Mesh::MeshData&&)data);
         }
 #pragma endregion MeshLoader
 
@@ -296,8 +356,24 @@ namespace Eng {
                     currMatName = filePath+line.substr(7);// cut off "newmtl "
                     material = MaterialUboData{};
                 } else if ((line[1] == 'o') && (line[2] == 'r') && (line[4] == ' ')) {// norm: normal map
-                    unsigned int normalMap = engine->storeTexture(line.substr(5));// cut off "norm " and load the texture
-                    material.map_norm = normalMap;
+                    if (line[5] == '-') {
+                        if ((line[6] != 'b') || (line[7] != 'm') || (line[8] != ' ')) throw std::runtime_error("Invalid mtl file: unknown property1");
+                        floats.reserve(1);
+                        size_t j = 9;
+                        for (; j < llen; j++) {
+                            if ((line[j] == '-') || (line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
+                                num += line[j];
+                            else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; break; }
+                            else throw std::runtime_error("Invalid mtl file: invalid character found in color.");
+                        }
+                        unsigned int normalMap = engine->storeTexture(line.substr(j+1));// cut off "norm " and load the texture
+                        material.map_norm = normalMap;
+                        material.normUvMult = floats[0];
+                        floats.clear();
+                    } else {
+                        unsigned int normalMap = engine->storeTexture(line.substr(5));// cut off "norm " and load the texture
+                        material.map_norm = normalMap;
+                    }
                 }
                 return;
             } else if (line[0] == 'K') {// Ka, Kd, Ks, Ke
@@ -383,28 +459,59 @@ namespace Eng {
                     unsigned int specularExpMap = engine->storeTexture(line.substr(7));// cut off "map_Ns " and load the texture
                     material.map_specE = specularExpMap;
                     return;
-                } else if ((line[4] == 'd')) {// map_d: dissolve/transparency map
+                } else if (line[4] == 'd') {// map_d: dissolve/transparency map
                     if (line[5] != ' ') throw std::runtime_error("Invalid mtl file: unknown property8");
                     // not currently handled
                     return;
-                } else if ((line[4] == 'n')) {// map_norm: normal map
-                    unsigned int normalMap = engine->storeTexture(line.substr(9));// cut off "map_norm " and load the texture
-                    material.map_norm = normalMap;
-                    return;
-                } else if ((line[4] == 'b')) {// map_bump: bump map// currently trated the same as normal map
-                    unsigned int normalMap = engine->storeTexture(line.substr(9));// cut off "map_bump " and load the texture
-                    material.map_norm = normalMap;
+                } else if ((line[4] == 'n') || (line[4] == 'b')) {// map_norm or map_bump: normal map
+                    if (
+                        !((line[4] == 'n') && (line[5] == 'o') && (line[6] == 'r') && (line[7] == 'm') && (line[8] == ' ')) &&
+                        !((line[4] == 'n') && (line[5] == 'u') && (line[6] == 'm') && (line[7] == 'p') && (line[8] == ' '))
+                    ) throw std::runtime_error("Invalid mtl file: unknown property9");
+                    if (line[9] == '-') {
+                        if ((line[10] != 'b') || (line[11] != 'm') || (line[12] != ' ')) throw std::runtime_error("Invalid mtl file: unknown property1");
+                        floats.reserve(1);
+                        size_t j = 13;
+                        for (; j < llen; j++) {
+                            if ((line[j] == '-') || (line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
+                                num += line[j];
+                            else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; break; }
+                            else throw std::runtime_error("Invalid mtl file: invalid character found in color.");
+                        }
+                        unsigned int normalMap = engine->storeTexture(line.substr(j+1));// cut off "norm " and load the texture
+                        material.map_norm = normalMap;
+                        material.normUvMult = floats[0];
+                        floats.clear();
+                    } else {
+                        unsigned int normalMap = engine->storeTexture(line.substr(9));// cut off "norm " and load the texture
+                        material.map_norm = normalMap;
+                    }
                     return;
                 }
                 throw std::runtime_error("Invalid mtl file: unknown property9");
             } else if (line[0] == 'b') {// bump, currently treated the same as normal map
                 if (
                     (line[1] != 'u') || (line[2] != 'm') ||
-                    (line[3] != 'p') || (line[4] != '_')
+                    (line[3] != 'p') || (line[4] != ' ')
                 ) throw std::runtime_error("Invalid mtl file: unknown property10");
-
-                unsigned int normalMap = engine->storeTexture(line.substr(5));// cut off "bump " and load the texture
-                material.map_norm = normalMap;
+                if (line[5] == '-') {
+                    if ((line[6] != 'b') || (line[7] != 'm') || (line[8] != ' ')) throw std::runtime_error("Invalid mtl file: unknown property1");
+                    floats.reserve(1);
+                    size_t j = 9;
+                    for (; j < llen; j++) {
+                        if ((line[j] == '-') || (line[j] == '.') || ((line[j] > '/') && (line[j] < ':')))// between 0-9
+                            num += line[j];
+                        else if (line[j] == ' ') { floats.push_back(std::stof(num)); num=""; break; }
+                        else throw std::runtime_error("Invalid mtl file: invalid character found in color.");
+                    }
+                    unsigned int normalMap = engine->storeTexture(line.substr(j+1));// cut off "norm " and load the texture
+                    material.map_norm = normalMap;
+                    material.normUvMult = floats[0];
+                    floats.clear();
+                } else {
+                    unsigned int normalMap = engine->storeTexture(line.substr(5));// cut off "norm " and load the texture
+                    material.map_norm = normalMap;
+                }
                 return;
             } else if (line[0] == 'T') {// Tr, Tf
                 return;// not handled right now

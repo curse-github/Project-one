@@ -7,6 +7,11 @@ int main(int argc, char** argv) {
         {DEG90, DEG45, 0.0f}// rotation
     , "Resources/Models/Quad.obj", "Resources/Models/suzanne.mtl", "Transparent");
 
+    engine.addObject(// window thing
+        {-1.5f, 0.0f, 0.0f},// position
+        {0.5f, 0.5f, 0.5f},// scale
+        {DEG90, -DEG45, 0.0f}// rotation
+    , "Resources/Models/Quad.obj", "Resources/Models/suzanne.mtl", "Plate");
     engine.addObject(// monkey1
         {-1.75f, -0.5f, 2.25f},// position
         {1.0f, 0.75f, 0.75f},// scale
@@ -27,7 +32,7 @@ int main(int argc, char** argv) {
         {0.0f, 0.5f, 1.5f},// position
         {3.0f, 3.0f, 3.0f},// scale
         {0.0f, 0.0f, 0.0f}// rotation
-    , "Resources/Models/Quad.obj", "Resources/Models/suzanne.mtl", "Debug");
+    , "Resources/Models/Quad.obj", "Resources/Models/suzanne.mtl", "Floor");
     
     const vec3 base(0.0f, -0.5f, 0.0f);
     const vec3 mult(1.5f, 0.1333f, -1.5f);

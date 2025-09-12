@@ -10,7 +10,7 @@ namespace Eng {
         pushConstantRanges[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         pushConstantRanges[0].offset = 0;
         pushConstantRanges[0].size = sizeof(DefaultPushConstantData);
-        // defined uniforms
+        // define uniforms
         materialIndexDescriptorSetLayout = DescriptorSetLayout::Builder(device)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 1).build();
         materialIndexUniformBuffer = new Buffer(device, sizeof(unsigned int), 256, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device->properties.limits.minUniformBufferOffsetAlignment);
@@ -55,7 +55,6 @@ namespace Eng {
         temp1 = numMaterials;
         pipelineConfig.fragSpecializationInfoEntries.push_back(VkSpecializationMapEntry{2, sizeof(temp1)+sizeof(numTextures), sizeof(numMaterials)});
         pipelineConfig.fragSpecializationInfoData.insert(pipelineConfig.fragSpecializationInfoData.cend(), (char*)&temp1, ((char*)&temp1)+sizeof(temp1));
-        
         // create actual pipeline
         pipeline = new Pipeline(device, "shaders/Diffuse-Blinn-Phong.vert.spv", "shaders/Diffuse-Blinn-Phong.frag.spv", pipelineConfig);
     }

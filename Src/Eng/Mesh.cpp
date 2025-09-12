@@ -1,7 +1,7 @@
 #include "Mesh.h"
 
 namespace Eng {
-    Mesh::Mesh(Device* _device, const Mesh::MeshData& meshData) : device(_device) {
+    Mesh::Mesh(Device* _device, Mesh::MeshData&& meshData) : device(_device) {
         // create vertex buffer
         vertexCount = static_cast<unsigned int>(meshData.vertices.size());
         assert((meshData.vertices.size() >= 3) && "Vertex count must be at least 3");
@@ -39,10 +39,11 @@ namespace Eng {
         // "VK_FORMAT_R32_SFLOAT" is 1 floats
         // "VK_FORMAT_R32G32_SFLOAT" is 2 floats
         // "VK_FORMAT_R32G32B32_SFLOAT" is 3 floats
+        // "VK_FORMAT_R32G32B32A32_SFLOAT" is 4 floats
         attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)});
         attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32_SFLOAT   , offsetof(Vertex, uv)});
         attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});
-        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent)});
+        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, tangent)});
         return attributeDescriptions;
     }
 

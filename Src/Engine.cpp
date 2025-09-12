@@ -16,9 +16,11 @@ namespace Eng {
             .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1)
             .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, maxTextures)
             .build();
-            
         textureIdxs[""] = 0u;
+        textureIdxs["White"] = 0u;
+        textureIdxs["Normal"] = 1u;
         textures.push_back(Loaders::TextureLoader::fromBmp(&device, "Resources/Textures/White.bmp"));
+        textures.push_back(Loaders::TextureLoader::fromBmp(&device, "Resources/Textures/Normal.bmp"));
     }
     Engine::~Engine() {
     }
@@ -107,10 +109,11 @@ namespace Eng {
             globalUniformBuffers.emplace_back(new Buffer(&device, sizeof(GlobalUboData), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device.properties.limits.minUniformBufferOffsetAlignment));
             globalUniformBuffers[i]->map();
         }
-        OwnedPointer<Buffer> materialUniformBuffer = new Buffer(&device, sizeof(MaterialUboData), materials.size(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, device.properties.limits.minUniformBufferOffsetAlignment);
+        OwnedPointer<Buffer> materialUniformBuffer = new Buffer(&device, sizeof(MaterialUboData), materials.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, device.properties.limits.minUniformBufferOffsetAlignment);
         materialUniformBuffer->map();
         materialUniformBuffer->write(materials.data(), materials.size());
-        materialUniformBuffer->flush();
+        materialUniformBuffer->unmap();
+        materialUniformBuffer->copyToDeviceLocal(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
         
         // create uniform buffer descriptor set layouts
         OwnedPointer<DescriptorSetLayout> globalDescriptorSetLayout = DescriptorSetLayout::Builder(&device)

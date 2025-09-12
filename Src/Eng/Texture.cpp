@@ -6,7 +6,7 @@ namespace Eng {
         const VkFormat& format, const VkImageTiling& tiling, const VkImageUsageFlags& imageUsage, const VkImageAspectFlags& aspect,
         const bool& createSampler
     ) : device(_device), width(_width), height(_height) {
-        VkFilter filter = VK_FILTER_NEAREST;
+        VkFilter filter = VK_FILTER_LINEAR;// VK_FILTER_NEAREST;
         VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
         if (data != nullptr) {

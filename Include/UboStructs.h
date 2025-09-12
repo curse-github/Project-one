@@ -13,6 +13,8 @@ namespace Eng {
         mat4 projectionView{1.0f};
         mat4 inverseView{1.0f};
         vec4 ambientLightColor{1.0f, 1.0f, 1.0f, 0.2f};
+        vec4 directionLightDirection{1.414f, -1.414f, 0.0f, 0.0f};
+        vec4 directionLightColorIntensity{1.0f, 1.0f, 1.0f, 1.0f};
         unsigned int numLights{0};
         alignas(16) pointLight pointLights[MAX_LIGHTS];
     };
@@ -22,7 +24,11 @@ namespace Eng {
         unsigned int map_diff = 0;
         unsigned int map_specC = 0;
         unsigned int map_specE = 0;
-        unsigned int map_norm = 0;
+        unsigned int map_norm = 1;
+        float normUvMult = 1.0f;
+        float pad1;
+        float pad2;
+        float pad3;
         // tangent found from uv
         // bi_tange = cross(normal, tangent)
         // normal = map_norm.r * tangent

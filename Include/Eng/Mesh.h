@@ -18,10 +18,10 @@ namespace Eng {
             vec3 position{};
             vec2 uv{};
             vec3 normal{};
-            vec3 tangent{};
+            vec4 tangent{};
 
             bool operator==(const Vertex &other) const {
-                return (position == other.position) && (uv == other.uv) && (normal == other.normal);
+                return (position == other.position) && (uv == other.uv) && (normal == other.normal) && (tangent == other.tangent);
             }
             
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
@@ -40,7 +40,7 @@ namespace Eng {
             MeshData& operator=(MeshData&& move) = default;
             ~MeshData() = default;
         };
-        Mesh(Device* _device, const MeshData& meshData);
+        Mesh(Device* _device, MeshData&& meshData);
         Mesh(const Mesh& copy) = delete;
         Mesh& operator=(const Mesh& copy) = delete;
         Mesh(Mesh&& move) = default;
